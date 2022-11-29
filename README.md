@@ -67,7 +67,6 @@ Below you can see a preview of the gui.
 ### MISC
 * Toggle Sprint
 * Remove Front View -- Skips the front view in the toggle perspective rotation.
-* No Carpet -- Flattens carpet hitboxes in Skyblock to prevent lag back. 
 </details>
 
 <details>
