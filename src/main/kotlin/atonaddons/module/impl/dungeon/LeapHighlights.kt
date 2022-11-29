@@ -31,7 +31,7 @@ object LeapHighlights : Module(
     private val color = ColorSetting("Highlight Color", Color(0,255,0,255), description = "Color of the highlight that is drawn behind the head of the target.")
     private val brTarget: SelectorSetting
     private val brTargetName = StringSetting("Br Target Name", description = "Name of the player you want to target during blood rush. This is only active when Custom is selected for Br target.")
-    private val disableAfterBr = BooleanSetting("Disable after Br", true, description = "Disables auto leap after blood was opened.")
+    private val disableAfterBr = BooleanSetting("Disable after Br", true, description = "Disables leap highlights after the Blood Door was opened.")
     private val bossTarget: SelectorSetting
     private val bossTargetName = StringSetting("Boss Target Name", description = "Name of the player you want to target in Boss. This is only active when Custom Boss is selected for Boss target.")
 

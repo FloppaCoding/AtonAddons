@@ -19,7 +19,21 @@ A 1.8.9 Minecraft Forge mod for Hypixel Skyblock.
   </a>
 </p>
 -->
+
+## Usage
 Open the Gui with /atonaddons (or /aa). You can then set a keybind for it in the Click Gui Module.
+
+By default all features will be disabled. 
+You can toggle features by left clicking on their corresponding module button in the click gui. 
+Right clicking that button will extend the settings for that module.
+All modules have a key bind setting, which for most of them will toggle the module. 
+But there are a few exceptions where that key bind is used to perform the modules action if it is enabled.
+
+**If you need information on what the module and its settings do middle click the module button and an
+advanced settings menu will open.**
+
+Below you can see a preview of the gui.
+![Gui Preview](./resources/GuiPreview.png "Gui Preview")
 
 ## Module List
 
@@ -75,4 +89,4 @@ Open the Gui with /atonaddons (or /aa). You can then set a keybind for it in the
 A special thank goes to [Harry282](https://github.com/Harry282), his projects allowed me to get started with making my own 
 forge mods.
 <br>
-[For the list of sources click here.](https://github.com/FloppaCoding/AtonAddons/blob/main/USEFUL_SOURCES.md "Credits")
+[For the list of sources click here.](./USEFUL_SOURCES.md "Credits")

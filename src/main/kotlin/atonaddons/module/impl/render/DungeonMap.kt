@@ -18,17 +18,18 @@ import java.awt.Color
 object DungeonMap : Module(
     "Dungeon Map",
     category = Category.RENDER,
-    description = "Shows the full dungeon map."
+    description = "Renders the dungeon map as a HUD element."
 ){
     val hideInBoss = BooleanSetting("Hide in Boss", true, description = "Hides the map in boss.")
     val showRunInformation = BooleanSetting("Show Run Info", true, description = "Shows run information under map.")
     val playerNameMode = SelectorSetting("Player Names", "Holding Leap", arrayListOf("Off", "Holding Leap", "Always"), description = "Show player name under player head.")
-    val autoScan = BooleanSetting("Map Scan", true, description = "Automatically scans when entering dungeon. Manual scan can be done with \"${MainCommand.commandAliases[0]} scan\".")
+    val autoScan = BooleanSetting("Map Scan", true, description = "Automatically scans when entering dungeon. Manual scan can be done with \"${MainCommand.commandAliases[0]} scan\"." +
+            "\nThis is required if you want to explore the map before the dungeon has started.")
     val mapScale = NumberSetting("Map Scale",1.25,0.1,4.0,0.02, description = "Scale of entire map.")
     val roomScale = NumberSetting("Dungeon Scale", 1.0,0.5,1.5, 0.01, description = "Scales the size of the displayed dungeon inside of the map HUD element.")
     val textScale = NumberSetting("Text Scale",0.75,0.0,2.0,0.02, description = "Scale of room names and secret counts relative to map size.")
     val playerHeadScale = NumberSetting("Head Scale",1.0,0.0,2.0,0.02, description = "Scale of player heads relative to map size.")
-    val spinnyMap = BooleanSetting("Spinny Map", false, description = "Centers the map on you and rotates it.")
+    val spinnyMap = BooleanSetting("Spinny Map", false, description = "Rotates the map instead of your head.")
     val centerOnPlayer = BooleanSetting("Center on Player", false, description = "Centers the map on your own Player Head.")
     val mapBackground = ColorSetting("Background", Color(0, 0, 0, 100),true, description = "Background Color for the map.")
     val mapBorder = ColorSetting("Border", Color(0, 0, 0, 255),true, description = "Border Color for the map.")
