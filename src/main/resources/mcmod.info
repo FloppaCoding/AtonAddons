@@ -1,0 +1,14 @@
+[
+  {
+    "modid": "aa",
+    "name": "Aton Addons",
+    "description": "MILF (Man i love Floppa).",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "",
+    "updateUrl": "",
+    "authorList": [
+      "Aton"
+    ]
+  }
+]

@@ -1,0 +1,27 @@
+{
+  "minVersion": "0.6",
+  "compatibilityLevel": "JAVA_8",
+  "package": "atonaddons.mixins",
+  "refmap": "mixins.atonaddons.refmap.json",
+  "mixins": [
+    "BlockMixin",
+    "CarpetMixin",
+    "MixinWorld",
+    "entity.MixinEntity",
+    "entity.MixinEntityLivingBase",
+    "entity.MixinPlayer"
+  ],
+  "client": [
+    "MinecraftAccessor",
+    "MixinGuiMainMenu",
+    "MixinMinecraft",
+    "MixinSoundManager",
+    "entity.MixinAbstractClientPlayer",
+    "entity.MixinPlayerSP",
+    "entity.MixinPlayerSP2",
+    "Gui.GuiMixin",
+    "Gui.GuiScreenMixin",
+    "Gui.MixinGuiContainer",
+    "render.ItemRendererMixin"
+  ]
+}
