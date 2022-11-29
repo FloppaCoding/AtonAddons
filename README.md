@@ -84,6 +84,20 @@ Below you can see a preview of the gui.
 * /aa resetgui -- Reset the position of panels in the gui.
 </details>
 
+## About the compliance with Hypixel Rules.
+<details> 
+  <summary>Dungeon Map</summary>
+
+Statement in the [Hypixel Server Rules](https://support.hypixel.net/hc/en-us/articles/6472550754962-Allowed-Modifications) regarding Cosmetic HUD (Head-Up Display) Modifications:
+> Modifications that alter the look and feel of the in-game head-up display (HUD), without adding extra information which would normally be unavailable to the player. For example, HUDs adding armor and status effects, which are available to the player in their inventory screen, are permitted, while mini-maps, other player health/armor indicators, player distance/range, etc. are not.
+
+While the Dungeon Map module offers an option that allows you to scan the dungeon, it will not display any information which would be unavailiable otherwise. 
+It is only used to show you information about rooms you already visited. 
+These rooms can not only be visually identified easiely, but the scoreboard also contains an ID that can be mapped to the room you are in.
+
+In this way it behaves similar to popular Dungeon Puzzle solvers like found in [Skytils](https://github.com/Skytils/SkytilsMod) and [DSM](https://github.com/bowser0000/SkyblockMod).
+</details>
+
 
 ## Credit to other Projects
 A special thank goes to [Harry282](https://github.com/Harry282), his projects allowed me to get started with making my own 
