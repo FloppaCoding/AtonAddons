@@ -3,22 +3,24 @@
 A 1.8.9 Minecraft Forge mod for Hypixel Skyblock.
 
 ***
-<!-- 
+
 <p align="center">
-  <a href="https://github.com/Skytils/SkytilsMod/releases" target="_blank">
+  <a href="https://github.com/FloppaCoding/AtonAddons/releases" target="_blank">
     <img alt="downloads" src="https://img.shields.io/github/v/release/FloppaCoding/AtonAddons?color=ff3f0b&style=flat&logo=GitHub" />
   </a>
-  <a href="https://github.com/Skytils/SkytilsMod/releases" target="_blank">
-    <img alt="downloads" src="https://img.shields.io/github/downloads/FloppaCoding/AtonAddons/total?color=ff3f0b&style=flat&logo=GitHub" />
-  </a>
-  <a href="https://github.com/Skytils/SkytilsMod/blob/main/LICENSE" target="_blank">
+  <a href="https://github.com/FloppaCoding/AtonAddons/blob/main/LICENSE" target="_blank">
     <img alt="license" src="https://img.shields.io/github/license/FloppaCoding/AtonAddons?color=ff3f0b&style=flat&logo=GitHub" />
+  </a>
+<!--
+  <a href="https://github.com/FloppaCoding/AtonAddons/releases" target="_blank">
+    <img alt="downloads" src="https://img.shields.io/github/downloads/FloppaCoding/AtonAddons/total?color=ff3f0b&style=flat&logo=GitHub" />
   </a>
   <a href="https://discord.gg/KhWE9HspKM" target="_blank">
     <img src="https://img.shields.io/discord/1020124307231358977?label=discord&style=flat&color=informational&logo=Discord&logoColor=FFFFFF" alt="discord">
   </a>
-</p>
 -->
+</p>
+
 
 ## Usage
 Open the Gui with /atonaddons (or /aa). You can then set a keybind for it in the Click Gui Module.
