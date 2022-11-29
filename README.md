@@ -65,7 +65,7 @@ Below you can see a preview of the gui.
 ### MISC
 * Toggle Sprint
 * Remove Front View -- Skips the front view in the toggle perspective rotation.
-+ No Carpet -- Flattens carpet hitboxes in Skyblock to prevent lag back. 
+* No Carpet -- Flattens carpet hitboxes in Skyblock to prevent lag back. 
 </details>
 
 <details>
@@ -80,8 +80,8 @@ Below you can see a preview of the gui.
   <summary>Commands</summary>
 
 ### Commands
-* /aa
-* 
+* /aa -- Open the gui.
+* /aa resetgui -- Reset the position of panels in the gui.
 </details>
 
 
