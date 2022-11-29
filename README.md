@@ -1,6 +1,6 @@
 # Aton Addons
 
-
+A 1.8.9 Minecraft Forge mod for Hypixel Skyblock.
 
 ***
 <!-- 
@@ -39,7 +39,7 @@ Open the Gui with /atonaddons (or /aa). You can then set a keybind for it in the
 * Click Gui
 * Edit Hud
 * Dungeon Warp Timer -- A HUD element that shows you the cooldown on dungeon warps.
-* Dungeon Map
+* Dungeon Map -- A reliable dungeon map.
 * Coordinate HUD
 * Item Animations -- Change the appearance of held items.
 * No Fire Overlay
@@ -70,3 +70,9 @@ Open the Gui with /atonaddons (or /aa). You can then set a keybind for it in the
 * 
 </details>
 
+
+## Credit to other Projects
+A special thank goes to [Harry282](https://github.com/Harry282), his projects allowed me to get started with making my own 
+forge mods.
+<br>
+[For the list of sources click here.](https://github.com/FloppaCoding/AtonAddons/blob/main/USEFUL_SOURCES.md "Credits")
