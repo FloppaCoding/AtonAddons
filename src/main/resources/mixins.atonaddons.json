@@ -4,8 +4,6 @@
   "package": "atonaddons.mixins",
   "refmap": "mixins.atonaddons.refmap.json",
   "mixins": [
-    "BlockMixin",
-    "CarpetMixin",
     "MixinWorld",
     "entity.MixinEntity",
     "entity.MixinEntityLivingBase",

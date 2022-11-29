@@ -51,7 +51,6 @@ object ModuleManager {
         ItemAnimations,
 
         //MISC
-        NoCarpet,
         ToggleSprint,
         RemoveFrontView,
 
