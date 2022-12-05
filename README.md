@@ -99,6 +99,8 @@ These rooms can not only be visually identified easiely, but the scoreboard also
 In this way it behaves similar to popular Dungeon Puzzle solvers like found in [Skytils](https://github.com/Skytils/SkytilsMod) and [DSM](https://github.com/bowser0000/SkyblockMod).
 </details>
 
+## Making your own Modules
+To get started with coding on your own, check out the [wiki](https://github.com/FloppaCoding/AtonAddons/wiki). 
 
 ## Credit to other Projects
 A special thank goes to [Harry282](https://github.com/Harry282), his projects allowed me to get started with making my own 
