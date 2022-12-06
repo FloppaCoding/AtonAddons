@@ -2,9 +2,15 @@ package atonaddons.module.impl.render
 
 import atonaddons.AtonAddons
 import atonaddons.AtonAddons.Companion.display
+import atonaddons.AtonAddons.Companion.onHypixel
 import atonaddons.module.Category
 import atonaddons.module.Module
 import atonaddons.module.settings.impl.*
+import atonaddons.utils.ChatUtils.modMessage
+import atonaddons.utils.ChatUtils.stripControlCodes
+import net.minecraftforge.client.event.ClientChatReceivedEvent
+import net.minecraftforge.fml.common.eventhandler.EventPriority
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import java.awt.Color
 
 /**
@@ -32,6 +38,7 @@ object ClickGui: Module(
     val chromaSize = NumberSetting("Chroma Size", 0.5, 0.0, 1.0, 0.01, description = "Determines how rapidly the chroma pattern changes spatially.")
     val chromaSpeed = NumberSetting("Chroma Speed", 0.5, 0.0, 1.0, 0.01, description = "Determines how fast the chroma changes with time.")
     val chromaAngle = NumberSetting("Chroma Angle", 45.0, 0.0, 360.0,1.0, description = "Determines the direction in which the chroma changes on your screen.")
+    val apiKey = StringSetting("API Key", "", length = 100, hidden = true)
 
     val panelX: MutableMap<Category, NumberSetting> = mutableMapOf()
     val panelY: MutableMap<Category, NumberSetting> = mutableMapOf()
@@ -68,6 +75,7 @@ object ClickGui: Module(
             chromaSize,
             chromaSpeed,
             chromaAngle,
+            apiKey,
             advancedRelX,
             advancedRelY
         ))
@@ -126,5 +134,25 @@ object ClickGui: Module(
         display = AtonAddons.clickGUI
         super.onEnable()
         toggle()
+    }
+
+    /**
+     * Override to prevent unregistering.
+     * This is required for the API key to work.
+     */
+    override fun onDisable() {}
+
+    /**
+     * Detect the API key.
+     */
+    @SubscribeEvent(receiveCanceled = true, priority = EventPriority.HIGHEST)
+    fun onChat(event: ClientChatReceivedEvent) {
+        if (!onHypixel || event.type == 2.toByte()) return
+        val text = event.message.unformattedText.stripControlCodes()
+        if (text.startsWith("Your new API key is ") && event.message.siblings.size >= 1) {
+            apiKey.text = event.message.siblings[0].chatStyle.chatClickEvent.value
+            modMessage("§bupdated your Hypixel API key to §2${apiKey.text}")
+            return
+        }
     }
 }

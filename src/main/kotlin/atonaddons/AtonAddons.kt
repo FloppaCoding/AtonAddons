@@ -6,6 +6,7 @@ import atonaddons.floppamap.core.Room
 import atonaddons.floppamap.dungeon.Dungeon
 import atonaddons.floppamap.utils.RoomUtils
 import atonaddons.module.ModuleManager
+import atonaddons.module.impl.render.ClickGui
 import atonaddons.module.impl.render.DungeonWarpTimer
 import atonaddons.ui.clickgui.ClickGUI
 import atonaddons.utils.ScoreboardUtils
@@ -61,6 +62,7 @@ class AtonAddons {
             this,
             Dungeon,
             ModuleManager,
+            ClickGui,       // For now this module is used for all general settings. Registering here is required for API key detection.
         ).forEach(MinecraftForge.EVENT_BUS::register)
 
         clickGUI = ClickGUI()
@@ -91,7 +93,7 @@ class AtonAddons {
         }
         if (tickRamp % 20 == 0) {
             if (mc.thePlayer != null) {
-                val onHypixel = EssentialAPI.getMinecraftUtil().isHypixel()
+                onHypixel = EssentialAPI.getMinecraftUtil().isHypixel()
 
                 inSkyblock = onHypixel && mc.theWorld.scoreboard.getObjectiveInDisplaySlot(1)
                     ?.let { ScoreboardUtils.cleanSB(it.displayName).contains("SKYBLOCK") } ?: false
@@ -115,6 +117,7 @@ class AtonAddons {
 
     @SubscribeEvent
     fun onDisconnect(event: ClientDisconnectionFromServerEvent) {
+        onHypixel = false
         inSkyblock = false
         inDungeons = false
         moduleConfig.saveConfig()
@@ -148,6 +151,7 @@ class AtonAddons {
         lateinit var clickGUI: ClickGUI
 
         var currentRegion: Room? = null
+        var onHypixel = false
         var inSkyblock = false
         var inDungeons = false
             get() = inSkyblock && field

@@ -4,6 +4,7 @@ import atonaddons.AtonAddons
 import atonaddons.AtonAddons.Companion.clickGUI
 import atonaddons.AtonAddons.Companion.display
 import atonaddons.AtonAddons.Companion.mc
+import atonaddons.AtonAddons.Companion.scope
 import atonaddons.floppamap.core.RoomData
 import atonaddons.floppamap.dungeon.Dungeon
 import atonaddons.floppamap.dungeon.DungeonScan
@@ -11,8 +12,9 @@ import atonaddons.module.impl.render.ClickGui
 import atonaddons.utils.ChatUtils.chatMessage
 import atonaddons.utils.ChatUtils.modMessage
 import atonaddons.utils.TabListUtils
-import atonaddons.utils.Utils.chatMessage
-import atonaddons.utils.Utils.modMessage
+import atonaddons.utils.HypixelApiUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import net.minecraft.client.gui.GuiScreen
 import net.minecraft.command.CommandBase
 import net.minecraft.command.ICommandSender
@@ -71,6 +73,21 @@ object MainCommand : CommandBase() {
             }
             "tablist"       -> {
                 TabListUtils.tabList.forEach { chatMessage(it.second) }
+            }
+            "secrets" -> scope.launch(Dispatchers.IO) {
+                val uuid = if (args.size > 1 ) {
+                    args[1]
+                }else {
+                    mc.thePlayer.uniqueID.toString()
+                }
+                val secrets = HypixelApiUtils.getSecrets(uuid)
+                modMessage("$secrets")
+            }
+            "test" -> {
+
+                Dungeon.dungeonTeammates.forEach {
+                    chatMessage(it.name)
+                }
             }
             else            -> {
                 modMessage("Command not recognized!")
