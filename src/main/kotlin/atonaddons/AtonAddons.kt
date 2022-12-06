@@ -130,7 +130,7 @@ class AtonAddons {
     companion object {
         const val MOD_ID = "aa"
         const val MOD_NAME = "Aton Addons"
-        const val MOD_VERSION = "0.1.1"
+        const val MOD_VERSION = "0.1.2"
         const val CHAT_PREFIX = "§0§l[§4§lAton Addons§0§l]§r"
         const val SHORT_PREFIX = "§0§l[§4§lAA§0§l]§r"
         const val RESOURCE_DOMAIN = "atonaddons"
