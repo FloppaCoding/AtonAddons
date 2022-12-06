@@ -2,11 +2,10 @@ package atonaddons.module
 
 import atonaddons.AtonAddons
 import atonaddons.module.settings.Setting
-import atonaddons.utils.Utils
+import atonaddons.utils.ChatUtils
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
 import net.minecraftforge.common.MinecraftForge
-import java.util.ArrayList
 
 open class Module(
     name: String,
@@ -69,7 +68,7 @@ open class Module(
      */
     open fun keyBind() {
         this.toggle()
-        Utils.modMessage("$name ${if (enabled) "§aenabled" else "§cdisabled"}.")
+        ChatUtils.modMessage("$name ${if (enabled) "§aenabled" else "§cdisabled"}.")
     }
 
     /**

@@ -3,9 +3,9 @@ package atonaddons.commands
 import atonaddons.AtonAddons
 import atonaddons.AtonAddons.Companion.mc
 import atonaddons.floppamap.dungeon.Dungeon
-import atonaddons.utils.Utils.chatMessage
+import atonaddons.utils.ChatUtils.chatMessage
 import atonaddons.utils.Utils.equalsOneOf
-import atonaddons.utils.Utils.modMessage
+import atonaddons.utils.ChatUtils.modMessage
 import net.minecraft.command.CommandBase
 import net.minecraft.command.ICommandSender
 import net.minecraft.util.Vec3

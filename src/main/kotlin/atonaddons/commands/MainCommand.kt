@@ -8,6 +8,8 @@ import atonaddons.floppamap.core.RoomData
 import atonaddons.floppamap.dungeon.Dungeon
 import atonaddons.floppamap.dungeon.DungeonScan
 import atonaddons.module.impl.render.ClickGui
+import atonaddons.utils.ChatUtils.chatMessage
+import atonaddons.utils.ChatUtils.modMessage
 import atonaddons.utils.TabListUtils
 import atonaddons.utils.Utils.chatMessage
 import atonaddons.utils.Utils.modMessage

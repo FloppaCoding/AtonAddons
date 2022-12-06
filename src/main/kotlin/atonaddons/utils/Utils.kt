@@ -1,26 +1,26 @@
 package atonaddons.utils
 
 import atonaddons.AtonAddons
-import atonaddons.AtonAddons.Companion.CHAT_PREFIX
-import atonaddons.AtonAddons.Companion.SHORT_PREFIX
 import atonaddons.AtonAddons.Companion.mc
 import atonaddons.floppamap.core.DungeonPlayer
 import atonaddons.floppamap.dungeon.Dungeon
 import atonaddons.mixins.MinecraftAccessor
-import atonaddons.module.impl.render.ClickGui
 import atonaddons.utils.ItemUtils.itemID
 import atonaddons.utils.ScoreboardUtils.sidebarLines
-import gg.essential.universal.UChat
 import net.minecraft.client.Minecraft
 import net.minecraft.client.entity.EntityPlayerSP
 import net.minecraft.client.network.NetHandlerPlayClient
 import net.minecraft.client.network.NetworkPlayerInfo
-import net.minecraft.util.*
+import net.minecraft.util.BlockPos
+import net.minecraft.util.StringUtils
 import net.minecraft.util.Timer
-import net.minecraftforge.client.ClientCommandHandler
 import java.util.*
 
-
+/**
+ * A collection of general utility functions that have not been sorted into individual classes.
+ *
+ * @author Aton
+ */
 object Utils {
 
     /**
@@ -103,38 +103,6 @@ object Utils {
             }
         }
         return false
-    }
-
-    fun modMessage(message: String) = chatMessage("${when(ClickGui.prefixStyle.index) { 0 -> CHAT_PREFIX; 1 -> SHORT_PREFIX 
-        else -> ClickGui.customPrefix.text }} $message")
-
-    /**
-     * Print a message in chat client side.
-     */
-    fun chatMessage(message: String) {
-        UChat.chat(message)
-//        mc.thePlayer.addChatMessage(ChatComponentText(message))
-    }
-
-    /**
-     * Print a message in chat client side.
-     */
-    fun chatMessage(obj: Any) {
-        UChat.chat(obj)
-//        mc.thePlayer.addChatMessage(ChatComponentText(message))
-    }
-
-    fun sendChat(message: String) {
-        UChat.say(message)
-//        mc.thePlayer.sendChatMessage(message)
-    }
-
-/**
- * Runs the specified command. Per default sends it to the server  but has client side option.
- */
-    fun command(text: String, clientSide: Boolean = false) {
-        if (clientSide) ClientCommandHandler.instance.executeCommand(mc.thePlayer, "/$text")
-        else  mc.thePlayer?.sendChatMessage("/$text")
     }
 
     fun getDungeonClass(tabEntries: List<Pair<NetworkPlayerInfo, String>>, playerName: String = mc.thePlayer.name): String? {

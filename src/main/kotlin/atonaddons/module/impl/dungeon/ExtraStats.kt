@@ -3,7 +3,7 @@ package atonaddons.module.impl.dungeon
 import atonaddons.AtonAddons.Companion.inDungeons
 import atonaddons.module.Category
 import atonaddons.module.Module
-import atonaddons.utils.Utils
+import atonaddons.utils.ChatUtils
 import net.minecraft.util.StringUtils.stripControlCodes
 import net.minecraftforge.client.event.ClientChatReceivedEvent
 import net.minecraftforge.fml.common.eventhandler.EventPriority
@@ -26,7 +26,7 @@ object ExtraStats : Module(
         if ( !inDungeons || event.type.toInt() == 2) return
         when (stripControlCodes(event.message.unformattedText)) {
             "                             > EXTRA STATS <" -> {
-                Utils.command("showextrastats")
+                ChatUtils.command("showextrastats")
                 return
             }
         }

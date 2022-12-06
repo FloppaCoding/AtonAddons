@@ -7,7 +7,7 @@ import atonaddons.module.settings.impl.ActionSetting
 import atonaddons.module.settings.impl.BooleanSetting
 import atonaddons.module.settings.impl.SelectorSetting
 import atonaddons.module.settings.impl.StringSetting
-import atonaddons.utils.Utils
+import atonaddons.utils.ChatUtils
 
 class KeyBind(name: String) : Module(name, category = Category.KEY_BIND){
     private val modes = arrayListOf("Command","Chat message")
@@ -41,10 +41,10 @@ class KeyBind(name: String) : Module(name, category = Category.KEY_BIND){
     private fun performAction(){
         when(mode.selected){
             "Command" -> {
-                Utils.command(action.text, true)
+                ChatUtils.command(action.text, true)
             }
             "Chat message" -> {
-                Utils.sendChat(action.text)
+                ChatUtils.sendChat(action.text)
             }
         }
     }
