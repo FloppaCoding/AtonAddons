@@ -267,9 +267,12 @@ object MapRender: HudElement(
                 yaw = mc.thePlayer.rotationYawHead
             })
         } else {
-            for (player in Dungeon.dungeonTeammates) {
-                RenderUtils.drawPlayerHead(player)
-            }
+            // Try catch because the dungeonTeammates get updated in a coroutine.
+            try {
+                for (player in Dungeon.dungeonTeammates) {
+                    RenderUtils.drawPlayerHead(player)
+                }
+            }catch (_: ConcurrentModificationException) {}
         }
     }
 

@@ -1,6 +1,8 @@
 package atonaddons.module.impl.dungeon
 
 import atonaddons.AtonAddons.Companion.inDungeons
+import atonaddons.events.DungeonEndEvent
+import atonaddons.floppamap.dungeon.Dungeon
 import atonaddons.module.Category
 import atonaddons.module.Module
 import atonaddons.utils.ChatUtils
@@ -19,7 +21,9 @@ object ExtraStats : Module(
     description = "Automatically clicks > EXTRA STATS < at the end of a run."
 ){
     /**
-     * Checks incoming chat messages for the extra stats message and if found runs the command.
+     * Triggers on the [DungeonEndEvent] fired in [Dungeon.onChat] when the
+     * "                             > EXTRA STATS <" chat message is received.
+     * @see Dungeon.onChat
      */
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     fun onChat(event: ClientChatReceivedEvent) {
@@ -35,3 +39,11 @@ object ExtraStats : Module(
 
 //"§r                             §6> §e§lEXTRA STATS §6<"
 //"                             > EXTRA STATS <"
+
+/*
+@SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
+    fun onDungeonEnd(event: DungeonEndEvent) {
+        ChatUtils.command("showextrastats", false)
+        return
+    }
+ */

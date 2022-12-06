@@ -39,6 +39,7 @@ object ModuleManager {
         SecretChime,
         ExtraStats,
         LeapHighlights,
+        PartyTracker,
 
         //RENDER
         ClickGui,

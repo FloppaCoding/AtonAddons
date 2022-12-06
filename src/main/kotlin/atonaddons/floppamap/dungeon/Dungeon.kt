@@ -4,10 +4,11 @@ import atonaddons.AtonAddons
 import atonaddons.AtonAddons.Companion.inDungeons
 import atonaddons.AtonAddons.Companion.mc
 import atonaddons.AtonAddons.Companion.scope
+import atonaddons.events.DungeonEndEvent
 import atonaddons.events.RoomChangeEvent
 import atonaddons.floppamap.core.*
-import atonaddons.floppamap.utils.RoomUtils
 import atonaddons.floppamap.utils.MapUtils
+import atonaddons.floppamap.utils.RoomUtils
 import atonaddons.module.impl.render.DungeonMap
 import atonaddons.utils.TabListUtils
 import atonaddons.utils.Utils.currentFloor
@@ -23,7 +24,37 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent
 import kotlin.math.abs
 
+/**
+ * In this class everything Dungeon map related is dispatched.
+ * It is also used to post various dungeon related events to be used within the Modules.
+ *
+ * Based on FunnyMap by Harry282 https://github.com/Harry282/FunnyMap
+ * @author Aton, Harry282
+ */
 object Dungeon {
+
+    /*
+     TODO rework the way how RoomData or tiles in general are handled.
+      Good features of the current system that should be kept are:
+       - The RoomData is the same object for connected rooms and can be used to identify connected rooms.
+       - The RoomData is used flexibly to update Puzzle names from the tab list.
+      Problems that have to be resolved:
+       - Currently there is the issue that the Dungeon scan will override the map based scan in MapUpdate.
+         This overrides the entire Tile and RoomData
+       - To make Puzzle names be changeable RoomData fields have become var instead of val. This is bad because the
+         RoomData should be only data retrieved from the config and not changeable.
+       - The current system does not allow to store extra variable information for the rooms.
+         It could in theory be stored for each Room individually but that would have the issue of it being not synced
+         between neighboring Tiles of the same room.
+      Possible Solution:
+       - Replacing the data Field of type RoomData within the Room Class with a new field of a new Type.
+         That new type should have one nullable var field that stores RoomData.
+       - All values within RoomData should again be val and not var.
+       - The RoomData value in the new class can be null when no data from the scan is available.
+       - The new type can contain various variable values that can be changed during the run, such as an identifier,
+         current secret count, etc.
+
+     */
 
     const val roomSize = 32
     const val startX = -185
@@ -42,6 +73,10 @@ object Dungeon {
     val rooms = mutableListOf<Room>()
     val doors = mutableMapOf<Door, Pair<Int, Int>>()
 
+    /**
+     * Contains all the teammates in the current dungeon.
+     * Also contains the Player.
+     */
     val dungeonTeammates = mutableListOf<DungeonPlayer>()
 
     // Used for chat info
@@ -79,8 +114,6 @@ object Dungeon {
             currentRoom = newRoom
         }
 
-
-        // removed the full scanned check
         scope.launch {
             getDungeonTabList()?.let {
                 MapUpdate.updatePlayers(it)
@@ -116,6 +149,9 @@ object Dungeon {
                 hasRunStarted = true
             }
             entryMessages.any { it == text } -> inBoss = true
+            text == "                             > EXTRA STATS <" -> {
+                MinecraftForge.EVENT_BUS.post(DungeonEndEvent())
+            }
         }
     }
 
@@ -171,7 +207,7 @@ object Dungeon {
      * Returns the room the player is currently in.
      * Includes boss room.
      */
-    @JvmName("getCurrentRoomAgain")
+    @JvmName("getCurrentRoomFromCoordinates")
     fun getCurrentRoom(): Room? {
         val room = if (inBoss) {
             val floor = currentFloor

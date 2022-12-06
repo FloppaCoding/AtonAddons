@@ -1,16 +1,18 @@
 package atonaddons.floppamap.dungeon
 
 import atonaddons.AtonAddons.Companion.mc
+import atonaddons.events.DungeonRoomStateChangeEvent
+import atonaddons.events.DungeonTeammateAddEvent
 import atonaddons.floppamap.core.*
 import atonaddons.floppamap.utils.MapUtils
 import atonaddons.floppamap.utils.MapUtils.calibrated
 import atonaddons.floppamap.utils.MapUtils.mapX
 import atonaddons.floppamap.utils.MapUtils.mapZ
 import atonaddons.floppamap.utils.MapUtils.yaw
-import atonaddons.utils.Utils.modMessage
 import net.minecraft.client.entity.EntityOtherPlayerMP
 import net.minecraft.client.network.NetworkPlayerInfo
 import net.minecraft.util.StringUtils
+import net.minecraftforge.common.MinecraftForge
 
 /**
  * This object provides a collection of methods to update the dungeon information from the map item in the hotbar and tab list.
@@ -45,7 +47,6 @@ object MapUpdate {
         MapUtils.coordMultiplier = (MapUtils.roomSize + 4.0) / Dungeon.roomSize
 
         calibrated = true
-        modMessage("Map Calibrated")
     }
 
     fun preloadHeads() {
@@ -56,7 +57,12 @@ object MapUpdate {
         }
     }
 
-    // Changing this method to not only update the players, but also get missing players
+    /**
+     * Adds missing Players to the [Dungeon.dungeonTeammates] list and updates the information.
+     * Posts a [DungeonTeammateAddEvent] when a new teammate is added to the list.
+     * Updates the dead status for the players.
+     * Updates the players position on the map.
+     */
     fun updatePlayers(tabEntries: List<Pair<NetworkPlayerInfo, String>>) {
         var iconNum = 0
         for (i in listOf(5, 9, 13, 17, 1)) {
@@ -64,35 +70,41 @@ object MapUpdate {
             val name = tabText.split(" ").getOrNull(1) ?: ""
             if (name == "") continue
             // if the player is not in the list add it
-            var player = Dungeon.dungeonTeammates.find { it.name == name }
-            if ((player == null) || player.fakeEntity) {
-                Dungeon.dungeonTeammates.remove(player)
+            var teammate = Dungeon.dungeonTeammates.find { it.name == name }
+            if ((teammate == null) || teammate.fakeEntity) {
                 val potPlayer = mc.theWorld.playerEntities.find { it.name == name }
                 val fake = potPlayer == null
                 (potPlayer ?: EntityOtherPlayerMP(mc.theWorld, tabEntries[i].first.gameProfile))
                     .let {
-                        Dungeon.dungeonTeammates.add(DungeonPlayer(it, name).apply {
-                            this.fakeEntity = fake
-                        })
+                        if (teammate == null){
+                            Dungeon.dungeonTeammates.add(DungeonPlayer(it, name).apply {
+                                this.fakeEntity = fake
+                                MinecraftForge.EVENT_BUS.post(DungeonTeammateAddEvent(this))
+                            })
+                        }else{
+                            teammate!!.player = it
+                            teammate!!.name = name
+                            teammate!!.fakeEntity = fake
+                        }
                     }
             }
 
-            player = Dungeon.dungeonTeammates.find { it.name == name } ?: continue
-            player.dead = tabText.contains("(DEAD)")
-            if (!player.dead) {
-                player.icon = "icon-${iconNum}"
+            teammate = Dungeon.dungeonTeammates.find { it.name == name } ?: continue
+            teammate.dead = tabText.contains("(DEAD)")
+            if (!teammate.dead) {
+                teammate.icon = "icon-${iconNum}"
                 iconNum++
             } else {
-                player.icon = ""
+                teammate.icon = ""
             }
         }
 
         // Changes here to make player positions and head rotations work before dungeon start
         val decor = MapUtils.getMapData()?.mapDecorations
         Dungeon.dungeonTeammates.forEach { dungeonPlayer ->
-            if (dungeonPlayer.player == mc.thePlayer) {
-                dungeonPlayer.yaw = dungeonPlayer.player.rotationYawHead
-            } else {
+//            if (dungeonPlayer.player == mc.thePlayer) {
+//                dungeonPlayer.yaw = dungeonPlayer.player.rotationYawHead
+//            } else {
                 val player = mc.theWorld.playerEntities.find { it.name == dungeonPlayer.name }
                 // when the player is in render distance, use that data instead of the map item
                 if (player != null) {
@@ -103,7 +115,7 @@ object MapUpdate {
                         dungeonPlayer.yaw = player.rotationYawHead
                     }
                 }else {
-                    //if no date from the map item is present go to the next player
+                    //if no data from the map item is present go to the next player
                     if (decor == null) return@forEach
                     decor.entries.find { (icon, _) -> icon == dungeonPlayer.icon }?.let { (_, vec4b) ->
                         dungeonPlayer.mapX = vec4b.mapX.toDouble()
@@ -111,7 +123,7 @@ object MapUpdate {
                         dungeonPlayer.yaw = vec4b.yaw
                     }
                 }
-            }
+//            }
         }
     }
 
@@ -129,7 +141,7 @@ object MapUpdate {
 
     /**
      * Updates the dungeon info from the hotbar map item.
-     * This includes adding newly discovered rooms to teh dungeonList as well as the unique rooms list
+     * This includes adding newly discovered rooms to the [Dungeon.dungeonList] as well as the [Dungeon.uniqueRooms] list
      * as well as updating the room states and door states based on check marks and door color.
      */
     fun updateRooms() {
@@ -145,48 +157,60 @@ object MapUpdate {
         for (x in 0..10) {
             for (z in 0..10) {
 
-                var room = Dungeon.dungeonList[z * 11 + x]
+                var tile = Dungeon.dungeonList[z * 11 + x]
 
                  //If room unknown try to get it from the map item.
-                if ((room as? Door)?.type == DoorType.NONE || (room.state == RoomState.UNKNOWN && !room.scanned)) {
-                    getRoomFromMap(z, x, mapColors)?.let {
-                        Dungeon.dungeonList[z * 11 + x] = it
-                        if ((it as? Room)?.data?.type == RoomType.PUZZLE)
+                if ((tile as? Door)?.type == DoorType.NONE || (tile.state == RoomState.UNKNOWN && !tile.scanned)) {
+                    getRoomFromMap(z, x, mapColors)?.let { newTile ->
+                        Dungeon.dungeonList[z * 11 + x] = newTile
+                        // Update the room size.
+                        if ((newTile as? Room)?.isSeparator == false && (newTile as? Room)?.data?.type == RoomType.NORMAL) {
+                            val size = Dungeon.dungeonList.filter { temporaryTile ->
+                                temporaryTile is Room && !temporaryTile.isSeparator && temporaryTile.data === newTile.data
+                            }.size
+                            newTile.data.size = size
+                        }
+                        // Set a flag when a puzzle was added to get that puzzles name from the tab list.
+                        if ((newTile as? Room)?.data?.type == RoomType.PUZZLE)
                             unmappedPuzz = true
                     }
                 }
 
-                room = Dungeon.dungeonList[z * 11 + x]
+                tile = Dungeon.dungeonList[z * 11 + x]
 
                 // Scan the room centers on the map for check marks.
                 val centerX = startX + x * increment + centerOffset
                 val centerZ = startZ + z * increment + centerOffset
                 if (centerX >= 128 || centerZ >= 128) continue
-                room.state = when (mapColors[(centerZ shl 7) + centerX].toInt()) {
+                val newState = when (mapColors[(centerZ shl 7) + centerX].toInt()) {
                     0 -> RoomState.UNDISCOVERED
-                    85 -> if (room is Door)
+                    85 -> if (tile is Door)
                         RoomState.DISCOVERED
                     else
                         RoomState.UNDISCOVERED // should not happen
-                    119 ->  if (room is Room)
+                    119 ->  if (tile is Room)
                                 RoomState.UNKNOWN
                             else
                                 RoomState.DISCOVERED // wither door
-                    18 -> if (room is Room) when (room.data.type) {
+                    18 -> if (tile is Room) when (tile.data.type) {
                         RoomType.BLOOD -> RoomState.DISCOVERED
                         RoomType.PUZZLE -> RoomState.FAILED
-                        else -> room.state
+                        else -> tile.state
                     } else RoomState.DISCOVERED
-                    30 -> if (room is Room) when (room.data.type) {
+                    30 -> if (tile is Room) when (tile.data.type) {
                         RoomType.ENTRANCE -> RoomState.DISCOVERED
                         else -> RoomState.GREEN
-                    } else room.state
+                    } else tile.state
                     34 -> RoomState.CLEARED
                     else -> {
-                        if (room is Door)
-                            room.opened = true
+                        if (tile is Door)
+                            tile.opened = true
                         RoomState.DISCOVERED
                     }
+                }
+                if (newState != tile.state) {
+                    MinecraftForge.EVENT_BUS.post(DungeonRoomStateChangeEvent(tile, newState))
+                    tile.state = newState
                 }
             }
         }
@@ -196,7 +220,8 @@ object MapUpdate {
 
     /**
      * Gets a dungeon tile from the map item.
-     * Also takes care of adding the room to the unique rooms list and combining the data of neighbouring rooms.
+     * Also takes care of adding the room to the unique rooms list [Dungeon.uniqueRooms]
+     * and combining the data of neighbouring rooms.
      */
     fun getRoomFromMap(row: Int, column: Int, mapColors: ByteArray): Tile? {
 
