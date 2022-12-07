@@ -43,10 +43,8 @@ object DungeonScan {
                 }
                 if (isColumnAir(xPos, zPos)) continue
 
-                if (Dungeon.dungeonList[z * 11 + x].scanned) continue
+                if (Dungeon.dungeonList[z * 11 + x]?.scanned == true) continue
                 getRoom(xPos, zPos, z, x)?.let {
-                    if (it is Room && x and 1 == 0 && z and 1 == 0) Dungeon.rooms.add(it)
-                    if (it is Door && it.type == DoorType.WITHER) Dungeon.doors[it] = Pair(x, z)
                     Dungeon.dungeonList[z * 11 + x] = it
                 }
             }
@@ -88,30 +86,29 @@ object DungeonScan {
                 }
             }
             !rowEven && !columnEven -> {
-                Dungeon.dungeonList[(row - 1) * 11 + column - 1].let {
+                Dungeon.dungeonList[(row - 1) * 11 + column - 1]?.let {
                     if (it is Room) {
                         Room(x, z, it.data).apply { isSeparator = true }
                     } else null
                 }
             }
             isDoor(x, z) -> {
-                Door(x, z).apply {
-                    val bState = mc.theWorld.getBlockState(BlockPos(x, 69, z))
-                    type = when {
-                        bState.block == Blocks.coal_block -> DoorType.WITHER
-                        bState.block == Blocks.monster_egg -> DoorType.ENTRANCE
-                        bState.block == Blocks.stained_hardened_clay && Blocks.stained_hardened_clay.getMetaFromState(
-                            bState
-                        ) == 14 -> DoorType.BLOOD
-                        else -> DoorType.NORMAL
-                    }
+                val bState = mc.theWorld.getBlockState(BlockPos(x, 69, z))
+                val doorType = when {
+                    bState.block == Blocks.coal_block -> DoorType.WITHER
+                    bState.block == Blocks.monster_egg -> DoorType.ENTRANCE
+                    bState.block == Blocks.stained_hardened_clay && Blocks.stained_hardened_clay.getMetaFromState(
+                        bState
+                    ) == 14 -> DoorType.BLOOD
+                    else -> DoorType.NORMAL
                 }
+                Door(x, z, doorType)
             }
             else -> {
-                Dungeon.dungeonList[if (rowEven) row * 11 + column - 1 else (row - 1) * 11 + column].let {
+                Dungeon.dungeonList[if (rowEven) row * 11 + column - 1 else (row - 1) * 11 + column]?.let {
                     if (it is Room) {
                         if (it.data.type == RoomType.ENTRANCE) {
-                            Door(x, z).apply { type = DoorType.ENTRANCE }
+                            Door(x, z, DoorType.ENTRANCE)
                         } else {
                             Room(x, z, it.data).apply { isSeparator = true }
                         }

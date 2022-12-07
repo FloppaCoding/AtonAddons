@@ -159,8 +159,8 @@ object MapUpdate {
 
                 var tile = Dungeon.dungeonList[z * 11 + x]
 
-                 //If room unknown try to get it from the map item.
-                if ((tile as? Door)?.type == DoorType.NONE || (tile.state == RoomState.UNKNOWN && !tile.scanned)) {
+                //If room unknown try to get it from the map item.
+                if (tile == null || (tile.state == RoomState.UNKNOWN && !tile.scanned)) {
                     getRoomFromMap(z, x, mapColors)?.let { newTile ->
                         Dungeon.dungeonList[z * 11 + x] = newTile
                         // Update the room size.
@@ -176,41 +176,42 @@ object MapUpdate {
                     }
                 }
 
-                tile = Dungeon.dungeonList[z * 11 + x]
-
                 // Scan the room centers on the map for check marks.
-                val centerX = startX + x * increment + centerOffset
-                val centerZ = startZ + z * increment + centerOffset
-                if (centerX >= 128 || centerZ >= 128) continue
-                val newState = when (mapColors[(centerZ shl 7) + centerX].toInt()) {
-                    0 -> RoomState.UNDISCOVERED
-                    85 -> if (tile is Door)
-                        RoomState.DISCOVERED
-                    else
-                        RoomState.UNDISCOVERED // should not happen
-                    119 ->  if (tile is Room)
-                                RoomState.UNKNOWN
-                            else
-                                RoomState.DISCOVERED // wither door
-                    18 -> if (tile is Room) when (tile.data.type) {
-                        RoomType.BLOOD -> RoomState.DISCOVERED
-                        RoomType.PUZZLE -> RoomState.FAILED
-                        else -> tile.state
-                    } else RoomState.DISCOVERED
-                    30 -> if (tile is Room) when (tile.data.type) {
-                        RoomType.ENTRANCE -> RoomState.DISCOVERED
-                        else -> RoomState.GREEN
-                    } else tile.state
-                    34 -> RoomState.CLEARED
-                    else -> {
-                        if (tile is Door)
-                            tile.opened = true
-                        RoomState.DISCOVERED
+                tile = Dungeon.dungeonList[z * 11 + x]
+                if (tile != null) {
+                    val centerX = startX + x * increment + centerOffset
+                    val centerZ = startZ + z * increment + centerOffset
+                    if (centerX >= 128 || centerZ >= 128) continue
+                    val newState = when (mapColors[(centerZ shl 7) + centerX].toInt()) {
+                        0 -> RoomState.UNDISCOVERED
+                        85 -> if (tile is Door)
+                            RoomState.DISCOVERED
+                        else
+                            RoomState.UNDISCOVERED // should not happen
+                        119 -> if (tile is Room)
+                            RoomState.UNKNOWN
+                        else
+                            RoomState.DISCOVERED // wither door
+                        18 -> if (tile is Room) when (tile.data.type) {
+                            RoomType.BLOOD -> RoomState.DISCOVERED
+                            RoomType.PUZZLE -> RoomState.FAILED
+                            else -> tile.state
+                        } else RoomState.DISCOVERED
+                        30 -> if (tile is Room) when (tile.data.type) {
+                            RoomType.ENTRANCE -> RoomState.DISCOVERED
+                            else -> RoomState.GREEN
+                        } else tile.state
+                        34 -> RoomState.CLEARED
+                        else -> {
+                            if (tile is Door)
+                                tile.opened = true
+                            RoomState.DISCOVERED
+                        }
                     }
-                }
-                if (newState != tile.state) {
-                    MinecraftForge.EVENT_BUS.post(DungeonRoomStateChangeEvent(tile, newState))
-                    tile.state = newState
+                    if (newState != tile.state) {
+                        MinecraftForge.EVENT_BUS.post(DungeonRoomStateChangeEvent(tile, newState))
+                        tile.state = newState
+                    }
                 }
             }
         }
@@ -291,7 +292,7 @@ object MapUpdate {
             }
             !rowEven && !columnEven -> { // possible separator (only for 2x2)
                 if(mapColors[(centerZ shl 7) + centerX].toInt() != 0){
-                    Dungeon.dungeonList[(row - 1) * 11 + column - 1].let {
+                    Dungeon.dungeonList[(row - 1) * 11 + column - 1]?.let {
                         if (it is Room) {
                             Room(xPos, zPos, it.data).apply { isSeparator = true }
                         } else null
@@ -300,7 +301,7 @@ object MapUpdate {
             }
             else -> { // door or separator
                 if (mapColors[( (if (rowEven) cornerZ else centerZ) shl 7) + (if (rowEven) centerX else cornerX)].toInt() != 0) { // separator
-                    Dungeon.dungeonList[if (rowEven) row * 11 + column - 1 else (row - 1) * 11 + column].let {
+                    Dungeon.dungeonList[if (rowEven) row * 11 + column - 1 else (row - 1) * 11 + column]?.let {
                         if (it is Room) {
                             Room(xPos, zPos, it.data).apply { isSeparator = true }
                         } else null
@@ -313,9 +314,7 @@ object MapUpdate {
                         18 -> DoorType.BLOOD
                         else -> DoorType.NORMAL
                     }
-                    Door(xPos, zPos).apply {
-                        type = doorType
-                    }
+                    Door(xPos, zPos, doorType)
                 }
             }
         }?.apply { scanned = false }

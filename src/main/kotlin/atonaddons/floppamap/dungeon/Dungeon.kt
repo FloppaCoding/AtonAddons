@@ -68,10 +68,8 @@ object Dungeon {
     var hasRunStarted = false
     var inBoss = false
     // 6 x 6 room grid, 11 x 11 with connections
-    val dungeonList = Array<Tile>(121) { Door(0, 0).apply { scanned = false } }
+    val dungeonList = Array<Tile?>(121) { null }
     val uniqueRooms = mutableListOf<Room>()
-    val rooms = mutableListOf<Room>()
-    val doors = mutableMapOf<Door, Pair<Int, Int>>()
 
     /**
      * Contains all the teammates in the current dungeon.
@@ -177,8 +175,7 @@ object Dungeon {
                 (event.newRoom.column + event.oldRoom.column) shr 1
             else return
         (dungeonList[doorRow*11 + doorColumn] as? Door)?.let { door ->
-            if (door.type != DoorType.NONE)
-                door.visited = true
+            door.visited = true
         }
     }
 
@@ -234,10 +231,8 @@ object Dungeon {
 
         dungeonTeammates.clear()
 
-        dungeonList.fill(Door(0, 0).apply { scanned = false })
+        dungeonList.fill(null)
         uniqueRooms.clear()
-        rooms.clear()
-        doors.clear()
 
         puzzles.clear()
         trapType = ""

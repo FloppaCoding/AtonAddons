@@ -3,9 +3,7 @@ package atonaddons.floppamap.core
 import atonaddons.module.impl.render.MapRooms
 import java.awt.Color
 
-data class Door(override var x: Int, override var z: Int) : Tile(x, z) {
-
-    var type = DoorType.NONE
+class Door(x: Int, z: Int, val type: DoorType) : Tile(x, z) {
     var opened = false
 
     override val color: Color

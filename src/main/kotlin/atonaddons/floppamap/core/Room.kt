@@ -1,24 +1,12 @@
 package atonaddons.floppamap.core
 
-import atonaddons.floppamap.dungeon.Dungeon
 import atonaddons.module.impl.render.MapRooms
 import java.awt.Color
 
-data class Room(override var x: Int, override var z: Int, var data: RoomData) : Tile(x, z) {
+class Room(x: Int, z: Int, var data: RoomData) : Tile(x, z) {
 
     var core = 0
     var isSeparator = false
-
-    /**
-     * Row in the duneonList.
-     */
-    val row
-        get() = (z - Dungeon.startZ) shr 4
-    /**
-     * Column in the dungeonList
-     */
-    val column
-        get() = (x - Dungeon.startX) shr 4
 
     override val color: Color
         get() = if (this.state == RoomState.UNKNOWN && !visited)
