@@ -186,7 +186,7 @@ object MapRender: HudElement(
 
                 if (tile.state == RoomState.UNDISCOVERED && !tile.visited) continue
 
-                if (tile is Room && (tile in Dungeon.uniqueRooms || tile.state == RoomState.UNKNOWN) ) {
+                if (tile is Room && (tile.isUnique || tile.state == RoomState.QUESTION_MARK) ) {
 
                     val xOffset = (x shr 1) * (roomSize + connectorSize)
                     val yOffset = (y shr 1) * (roomSize + connectorSize)
@@ -238,7 +238,7 @@ object MapRender: HudElement(
                 RoomState.CLEARED -> defaultWhite
                 RoomState.GREEN -> defaultGreen
                 RoomState.FAILED -> defaultCross
-                RoomState.UNKNOWN -> {
+                RoomState.QUESTION_MARK -> {
                     if (!tile.visited)
                         defaultQuestion
                     else null
@@ -249,7 +249,7 @@ object MapRender: HudElement(
                 RoomState.CLEARED -> neuWhite
                 RoomState.GREEN -> neuGreen
                 RoomState.FAILED -> neuCross
-                RoomState.UNKNOWN -> {
+                RoomState.QUESTION_MARK -> {
                     if (!tile.visited)
                         neuQuestion
                     else null

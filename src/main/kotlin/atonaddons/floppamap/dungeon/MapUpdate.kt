@@ -99,12 +99,9 @@ object MapUpdate {
             }
         }
 
-        // Changes here to make player positions and head rotations work before dungeon start
+        // Update the teammates position from the World if possible, otherwise use the map item.
         val decor = MapUtils.getMapData()?.mapDecorations
         Dungeon.dungeonTeammates.forEach { dungeonPlayer ->
-//            if (dungeonPlayer.player == mc.thePlayer) {
-//                dungeonPlayer.yaw = dungeonPlayer.player.rotationYawHead
-//            } else {
                 val player = mc.theWorld.playerEntities.find { it.name == dungeonPlayer.name }
                 // when the player is in render distance, use that data instead of the map item
                 if (player != null) {
@@ -130,8 +127,9 @@ object MapUpdate {
     /**
      * Updates the names of revealed puzzles from the tab list.
      */
-    fun updatePuzzleNames() {
-        val puzzles = Dungeon.uniqueRooms.filter { room ->  room.data.type == RoomType.PUZZLE && room.state.revealed  }
+    private fun updatePuzzleNames() {
+        val puzzles = Dungeon.dungeonList.filterIsInstance<Room>()
+            .filter { room -> !room.isSeparator && room.data.type == RoomType.PUZZLE && room.state.revealed  }
             .sortedBy { room -> room.column*11 + room.row }
         if (RunInformation.puzzles.size == puzzles.size) {
             RunInformation.puzzles.withIndex().forEach { (index, name) -> puzzles[index].data.name = name }
@@ -141,7 +139,7 @@ object MapUpdate {
 
     /**
      * Updates the dungeon info from the hotbar map item.
-     * This includes adding newly discovered rooms to the [Dungeon.dungeonList] as well as the [Dungeon.uniqueRooms] list
+     * This includes adding newly discovered rooms to the [Dungeon.dungeonList]
      * as well as updating the room states and door states based on check marks and door color.
      */
     fun updateRooms() {
@@ -160,7 +158,7 @@ object MapUpdate {
                 var tile = Dungeon.dungeonList[z * 11 + x]
 
                 //If room unknown try to get it from the map item.
-                if (tile == null || (tile.state == RoomState.UNKNOWN && !tile.scanned)) {
+                if (tile == null || (tile.state == RoomState.QUESTION_MARK && !tile.scanned)) {
                     getRoomFromMap(z, x, mapColors)?.let { newTile ->
                         Dungeon.dungeonList[z * 11 + x] = newTile
                         // Update the room size.
@@ -189,7 +187,7 @@ object MapUpdate {
                         else
                             RoomState.UNDISCOVERED // should not happen
                         119 -> if (tile is Room)
-                            RoomState.UNKNOWN
+                            RoomState.QUESTION_MARK
                         else
                             RoomState.DISCOVERED // wither door
                         18 -> if (tile is Room) when (tile.data.type) {
@@ -221,10 +219,9 @@ object MapUpdate {
 
     /**
      * Gets a dungeon tile from the map item.
-     * Also takes care of adding the room to the unique rooms list [Dungeon.uniqueRooms]
-     * and combining the data of neighbouring rooms.
+     * Also takes care of combining the data of neighbouring rooms.
      */
-    fun getRoomFromMap(row: Int, column: Int, mapColors: ByteArray): Tile? {
+    private fun getRoomFromMap(row: Int, column: Int, mapColors: ByteArray): Tile? {
 
         val startX = MapUtils.startCorner.first
         val startZ = MapUtils.startCorner.second
@@ -262,33 +259,8 @@ object MapUpdate {
                 }
 
                 // Connect the tile to neighboring ones.
-                // The left most and highest cell will be the one with the check mark, so use that as the main one.
-                // left gets prioritized over top.
-                val left = if (column > 0) (Dungeon.dungeonList[row * 11 + column-1] as? Room) else null
-                val top = if (row > 0) (Dungeon.dungeonList[(row-1) * 11 + column] as? Room) else null
-                var isUnique = false
-                val data = when {
-                    left?.isSeparator == true && top?.isSeparator == true -> { // get the data from the left and update it to the two tiles up top
-                        top.data = left.data
-                        val topRoom = (Dungeon.dungeonList[(row-2) * 11 + column] as? Room)
-                        Dungeon.uniqueRooms.remove(topRoom)
-                        topRoom?.data = left.data
-                        left.data
-                    }
-                    left?.isSeparator == true -> left.data
-                    top?.isSeparator == true -> top.data
-                    else -> { // If no rooms on top or left, then this one will be used as the main cell and added to the unique rooms list
-                        isUnique = true
-                        RoomData("Unknown$column$row", roomType, 0, 0, listOf(), 0, 0)
-                    }
-                }
-                val room = Room(xPos, zPos, data)
-                if (isUnique) {
-                    val candidate = Dungeon.uniqueRooms.find { match -> !match.isSeparator && match.data.name == room.data.name }
-                    Dungeon.uniqueRooms.remove(candidate)
-                    Dungeon.uniqueRooms.add(room)
-                }
-                room
+                val data = getAndSynchDataFromNeighborOrNew(row, column) { RoomData("Unknown$column$row", roomType) }
+                Room(xPos, zPos, data)
             }
             !rowEven && !columnEven -> { // possible separator (only for 2x2)
                 if(mapColors[(centerZ shl 7) + centerX].toInt() != 0){
@@ -318,5 +290,35 @@ object MapUpdate {
                 }
             }
         }?.apply { scanned = false }
+    }
+
+    /**
+     * Get the data from already scanned tiles of this room, otherwise create new data for this room.
+     *
+     * Checks [Dungeon.dungeonList] for connectors west and north of this tile to determine whether this Tile is part
+     * of a multi-tile room. If so returns the data of the already scanned Tile and update the north tile if required.
+     *
+     * The reason why this is used is to ensure that the [Room.data] filed references the same RoomData Object for
+     * connected Tiles. This effectively synchronizes this data for connected Tiles.
+     */
+    fun getAndSynchDataFromNeighborOrNew(row: Int, column: Int, defaultData: () -> RoomData): RoomData {
+        // Connect the tile to neighboring ones.
+        // The left most and highest cell will be the one with the check mark, so use that as the main one.
+        // left gets prioritized over top.
+        val left = if (column > 0) (Dungeon.dungeonList[row * 11 + column-1] as? Room) else null
+        val top = if (row > 0) (Dungeon.dungeonList[(row-1) * 11 + column] as? Room) else null
+        return when {
+            left?.isSeparator == true && top?.isSeparator == true -> { // get the data from the left and update it to the two tiles up top
+                top.data = left.data
+                val topRoom = (Dungeon.dungeonList[(row-2) * 11 + column] as? Room)
+                topRoom?.data = left.data
+                left.data
+            }
+            left?.isSeparator == true -> left.data
+            top?.isSeparator == true -> top.data
+            else -> { // If no rooms on top or left, then this one will be used as the main tile and new data will be instanced
+                defaultData()
+            }
+        }
     }
 }

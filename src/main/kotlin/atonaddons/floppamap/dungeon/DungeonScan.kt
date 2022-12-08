@@ -15,11 +15,11 @@ import net.minecraft.util.ResourceLocation
 
 object DungeonScan {
 
-    private val roomList: Set<RoomData> = try {
+    private val roomList: Set<RoomConfigData> = try {
         Gson().fromJson(
             mc.resourceManager.getResource(ResourceLocation(AtonAddons.RESOURCE_DOMAIN, "floppamap/rooms.json"))
                 .inputStream.bufferedReader(),
-            object : TypeToken<Set<RoomData>>() {}.type
+            object : TypeToken<Set<RoomConfigData>>() {}.type
         )
     } catch (e: JsonSyntaxException) {
         println("Error parsing FloppaMap room data.")
@@ -29,6 +29,10 @@ object DungeonScan {
         setOf()
     }
 
+    /**
+     * Scans the dungeon from the loaded chunks in the world and updates [Dungeon.dungeonList] based on that.
+     * When all chunks are loaded [Dungeon.fullyScanned] will be set to true afterwards.
+     */
     fun scanDungeon() {
         var allLoaded = true
 
@@ -41,11 +45,26 @@ object DungeonScan {
                     allLoaded = false
                     continue
                 }
-                if (isColumnAir(xPos, zPos)) continue
 
                 if (Dungeon.dungeonList[z * 11 + x]?.scanned == true) continue
-                getRoom(xPos, zPos, z, x)?.let {
-                    Dungeon.dungeonList[z * 11 + x] = it
+                getRoomFromWorld(xPos, zPos, z, x)?.let { newTile ->
+                    val oldTile = Dungeon.dungeonList[z * 11 + x]
+                    // When the tile is already scanned from the map item make sure to not overwrite it.
+                    // Instead just update the values.
+                    if (oldTile != null) {
+                        /*
+                         NOTE: The following check does not account for the case when newTile and oldTile
+                          are of different type. This should not happen and when it does the newTile is likely faulty.
+                         */
+                        if (oldTile is Room && newTile is Room) { // Rooms
+                            oldTile.data.configData = newTile.data.configData
+                            oldTile.core = newTile.core
+                        }else { // Doors
+                            oldTile.scanned = true
+                        }
+                    }else {
+                        Dungeon.dungeonList[z * 11 + x] = newTile
+                    }
                 }
             }
         }
@@ -54,35 +73,27 @@ object DungeonScan {
         }
     }
 
-    private fun getRoom(x: Int, z: Int, row: Int, column: Int): Tile? {
+    /**
+     * Creates a dungeon Tile instance from the World.
+     * Also takes care of combining the data of neighbouring rooms.
+     * This is achieved by scanning the blocks in the column specified by [x] and [z].
+     * Returns null when the column is air.
+     */
+    private fun getRoomFromWorld(x: Int, z: Int, row: Int, column: Int): Tile? {
+        if (isColumnAir(x, z)) return null
         val rowEven = row and 1 == 0
         val columnEven = column and 1 == 0
 
         return when {
             rowEven && columnEven -> {
-                getRoomData(x, z)?.let {
-                    Room(x, z, it).apply {
-                        // Quite inefficient as we are scanning the core twice
-                        // Ideally we would save the core from getting room data
-                        core = getCore(x, z)
+                val core = getCore(x, z)
+                getRoomConfigData(core)?.let { configData ->
+                    // Connect the tile to neighboring ones.
+                    val data = MapUpdate.getAndSynchDataFromNeighborOrNew(row, column) { RoomData(configData) }
+                    // Update the configData
+                    data.configData = configData
 
-
-                        val candidate = Dungeon.uniqueRooms.find { match -> match.data.name == data.name }
-                        // If room not in list, or a cell further towards south east is in the list replace it with this one
-                        if (candidate == null || !candidate.scanned || candidate.x > x || (candidate.z > z && candidate.x == x)) {
-                            Dungeon.uniqueRooms.remove(candidate)
-                            Dungeon.uniqueRooms.add(this)
-                            if (candidate == null) {
-                                when (data.type) {
-                                    RoomType.PUZZLE -> Dungeon.puzzles.add(data.name)
-                                    else -> {}
-                                }
-                            }
-                        }
-                        if (candidate != null) {
-                            visited = candidate.visited
-                        }
-                    }
+                    Room(x, z, data).apply { this.core = core }
                 }
             }
             !rowEven && !columnEven -> {
@@ -118,11 +129,11 @@ object DungeonScan {
         }
     }
 
-    fun getRoomData(x: Int, z: Int): RoomData? {
-        return getRoomData(getCore(x, z))
+    fun getRoomConfigData(x: Int, z: Int): RoomConfigData? {
+        return getRoomConfigData(getCore(x, z))
     }
 
-    private fun getRoomData(hash: Int): RoomData? {
+    private fun getRoomConfigData(hash: Int): RoomConfigData? {
         return roomList.find { hash in it.cores }
     }
 

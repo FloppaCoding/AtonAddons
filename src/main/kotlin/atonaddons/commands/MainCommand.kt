@@ -5,7 +5,7 @@ import atonaddons.AtonAddons.Companion.clickGUI
 import atonaddons.AtonAddons.Companion.display
 import atonaddons.AtonAddons.Companion.mc
 import atonaddons.AtonAddons.Companion.scope
-import atonaddons.floppamap.core.RoomData
+import atonaddons.floppamap.core.RoomConfigData
 import atonaddons.floppamap.dungeon.Dungeon
 import atonaddons.floppamap.dungeon.DungeonScan
 import atonaddons.module.impl.render.ClickGui
@@ -49,11 +49,11 @@ object MainCommand : CommandBase() {
             "gui"           -> display = clickGUI
             "scan"          -> DungeonScan.scanDungeon()
             "roomdata"      -> DungeonScan.getRoomCentre(mc.thePlayer.posX.toInt(), mc.thePlayer.posZ.toInt()).let {
-                DungeonScan.getRoomData(it.first, it.second) ?: DungeonScan.getCore(it.first, it.second)
+                DungeonScan.getRoomConfigData(it.first, it.second) ?: DungeonScan.getCore(it.first, it.second)
             }.run {
                 GuiScreen.setClipboardString(this.toString())
                 modMessage(
-                    if (this is RoomData) "Copied room data to clipboard."
+                    if (this is RoomConfigData) "Copied room data to clipboard."
                     else "Existing room data not found. Copied room core to clipboard."
                 )
             }

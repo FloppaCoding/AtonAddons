@@ -63,13 +63,11 @@ object Dungeon {
     private var lastScanTime: Long = 0
     private var isScanning = false
     var fullyScanned = false
-    var fullyScannedRotation = false
 
     var hasRunStarted = false
     var inBoss = false
     // 6 x 6 room grid, 11 x 11 with connections
     val dungeonList = Array<Tile?>(121) { null }
-    val uniqueRooms = mutableListOf<Room>()
 
     /**
      * Contains all the teammates in the current dungeon.
@@ -77,9 +75,6 @@ object Dungeon {
      */
     val dungeonTeammates = mutableListOf<DungeonPlayer>()
 
-    // Used for chat info
-    val puzzles = mutableListOf<String>()
-    var trapType = ""
     var witherDoors = 0
 
     /**
@@ -159,9 +154,10 @@ object Dungeon {
     @SubscribeEvent
     fun onRoomChange(event: RoomChangeEvent) {
         if (event.newRoom == null) return
+        if (event.newRoom.data.type == RoomType.BOSS || event.newRoom.data.type == RoomType.REGION) return
         // Update all of the connected rooms and separators to visited.
         dungeonList.forEach {
-            if ((it is Room) && it.data.type != RoomType.UNKNOWN && it.data == event.newRoom.data){
+            if ((it is Room) && it.data.type != RoomType.UNKNOWN && it.data === event.newRoom.data){
                 it.visited = true
             }
         }
@@ -174,6 +170,7 @@ object Dungeon {
         val doorColumn = if (abs(event.newRoom.column - event.oldRoom.column) <= 2)
                 (event.newRoom.column + event.oldRoom.column) shr 1
             else return
+        if (doorRow < 0 || doorRow > 11 || doorColumn < 0 || doorColumn < 11) return
         (dungeonList[doorRow*11 + doorColumn] as? Door)?.let { door ->
             door.visited = true
         }
@@ -186,7 +183,6 @@ object Dungeon {
         hasRunStarted = false
         inBoss = false
         fullyScanned = false
-        fullyScannedRotation = false
     }
 
     private fun shouldScan() =
@@ -232,10 +228,7 @@ object Dungeon {
         dungeonTeammates.clear()
 
         dungeonList.fill(null)
-        uniqueRooms.clear()
 
-        puzzles.clear()
-        trapType = ""
         witherDoors = 0
         RunInformation.reset()
     }

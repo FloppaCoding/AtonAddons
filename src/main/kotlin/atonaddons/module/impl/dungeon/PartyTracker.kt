@@ -32,7 +32,7 @@ object PartyTracker : Module(
      */
     private val roomClearers: MutableMap<RoomData, List<DungeonPlayer>> = mutableMapOf()
 
-    private val unidentifiedRoomData = RoomData("Unidentified", RoomType.UNKNOWN, 0, 0, listOf(), 0, 0)
+    private val unidentifiedRoomData = RoomData("Unidentified", RoomType.UNKNOWN)
 
     /**
      * Get the total secrets a player has collected from the Hypixel API when the player is added to the list of dungeon

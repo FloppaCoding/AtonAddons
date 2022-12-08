@@ -43,7 +43,7 @@ class WhereCommand : CommandBase() {
             modMessage("Room Information")
             chatMessage("§r&eCurrent room: §r" + room.data.name)
             chatMessage("§r&eRoom coordinates: §r" + room.x + ", " + room.z)
-            chatMessage("§r§eRoomState: ${room.state.name}, unique: ${room in Dungeon.uniqueRooms}")
+            chatMessage("§r§eRoomState: ${room.state.name}")
             chatMessage("§r&eRelative Player coordinates: §r" + key.joinToString())
         }catch (e: Throwable) {
             modMessage("§cCould not get data!")
