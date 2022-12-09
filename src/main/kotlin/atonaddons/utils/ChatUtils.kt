@@ -57,7 +57,7 @@ object ChatUtils {
             when (ClickGui.prefixStyle.index) {
                 0 -> AtonAddons.CHAT_PREFIX; 1 -> AtonAddons.SHORT_PREFIX
                 else -> reformatString( ClickGui.customPrefix.text)
-            }
+            } + " "
         ).appendSibling(iChatComponent)
     )
 

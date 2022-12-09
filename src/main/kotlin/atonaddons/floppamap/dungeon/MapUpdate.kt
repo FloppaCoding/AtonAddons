@@ -132,7 +132,7 @@ object MapUpdate {
             .filter { room -> !room.isSeparator && room.data.type == RoomType.PUZZLE && room.state.revealed  }
             .sortedBy { room -> room.column*11 + room.row }
         if (RunInformation.puzzles.size == puzzles.size) {
-            RunInformation.puzzles.withIndex().forEach { (index, name) -> puzzles[index].data.name = name }
+            RunInformation.puzzles.withIndex().forEach { (index, puzzlePair) -> puzzles[index].data.name = puzzlePair.first }
             unmappedPuzz = false
         }
     }

@@ -77,6 +77,8 @@ object Dungeon {
 
     var witherDoors = 0
 
+    private val deathPattern = Regex("^ ☠ (?<name>\\w+) .+ and became a ghost")
+
     /**
      * Contains the current room. Updated every tick.
      */
@@ -144,6 +146,13 @@ object Dungeon {
             entryMessages.any { it == text } -> inBoss = true
             text == "                             > EXTRA STATS <" -> {
                 MinecraftForge.EVENT_BUS.post(DungeonEndEvent())
+            }
+            text.contains("☠") -> {
+                val matcher = deathPattern.find(text)
+                val deadName = matcher?.groups?.get("name")?.value
+                dungeonTeammates.find {
+                    if (deadName.equals("you", true)) it.name == mc.thePlayer.name else it.name == deadName
+                }?.apply{ deaths++ }
             }
         }
     }

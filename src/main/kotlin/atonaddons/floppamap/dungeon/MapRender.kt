@@ -52,7 +52,7 @@ object MapRender: HudElement(
             0.0,
             0.0,
             128.0,
-            if (DungeonMap.showRunInformation.enabled) 138.0 else 128.0,
+            if (DungeonMap.showRunInformation.enabled) 142.0 else 128.0,
             DungeonMap.mapBackground.value
         )
         // Border
@@ -61,7 +61,7 @@ object MapRender: HudElement(
             0.0,
             0.0,
             128.0,
-            if (DungeonMap.showRunInformation.enabled) 138.0 else 128.0,
+            if (DungeonMap.showRunInformation.enabled) 142.0 else 128.0,
             DungeonMap.mapBorderWidth.value,
             DungeonMap.mapBorder.value
         )
@@ -207,12 +207,12 @@ object MapRender: HudElement(
                     val name = mutableListOf<String>()
 
                     if ((MapRooms.mapRoomNames.index != 0 && tile.data.type == RoomType.PUZZLE ||
-                        MapRooms.mapRoomNames.index == 2 && tile.data.type.equalsOneOf(
+                        (MapRooms.mapRoomNames.index == 2 && tile.data.type.equalsOneOf(
                             RoomType.NORMAL,
                             RoomType.RARE,
                             RoomType.CHAMPION,
                             RoomType.TRAP
-                        ))
+                        ) && tile.visited))
                         && (tile.state.revealed || tile.visited) && !tile.data.name.startsWith("Unknown")
                     ) {
                         name.addAll(tile.data.name.split(" "))
@@ -302,9 +302,12 @@ object MapRender: HudElement(
         GlStateManager.pushMatrix()
         GlStateManager.translate(0f, 128f, 0f)
         GlStateManager.scale(0.66, 0.66, 1.0)
+        // First line
         mc.fontRendererObj.drawString("Secrets: ${RunInformation.secretCount}/${RunInformation.totalSecrets ?: "?"}", 5, 0, 0xffffff)
         mc.fontRendererObj.drawString("Crypts: ${RunInformation.cryptsCount}", 85, 0, 0xffffff)
         mc.fontRendererObj.drawString("Deaths: ${RunInformation.deathCount}", 140, 0, 0xffffff)
+        // Second Line
+        mc.fontRendererObj.drawString("Score: ${RunInformation.score}", 5, mc.fontRendererObj.FONT_HEIGHT, 0xffffff)
         GlStateManager.popMatrix()
     }
 }

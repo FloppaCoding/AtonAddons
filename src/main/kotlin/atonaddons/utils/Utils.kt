@@ -73,6 +73,7 @@ object Utils {
 
     /**
      * The current dungeon floor (1..7) or null if not in dungeon
+     * @see RunInformation
      */
     val currentFloor: Int?
         get() {
@@ -90,18 +91,6 @@ object Utils {
             if(mc.thePlayer.posZ > 0 ) { //check whether in boss room
                 return true
             }}
-        return false
-    }
-
-    fun isFloor(floor: Int): Boolean {
-        sidebarLines.forEach {
-            val line = ScoreboardUtils.cleanSB(it)
-            if (line.contains("The Catacombs (")) {
-                if (line.substringAfter("(").substringBefore(")").equalsOneOf("F$floor", "M$floor")) {
-                    return true
-                }
-            }
-        }
         return false
     }
 

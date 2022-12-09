@@ -10,9 +10,13 @@ import atonaddons.floppamap.dungeon.Dungeon
 import atonaddons.floppamap.dungeon.MapUpdate
 import atonaddons.module.Category
 import atonaddons.module.Module
+import atonaddons.module.settings.impl.BooleanSetting
 import atonaddons.utils.ChatUtils
 import atonaddons.utils.TabListUtils
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import net.minecraft.util.ChatComponentText
 import net.minecraft.util.EnumChatFormatting
 import net.minecraft.util.IChatComponent
@@ -27,6 +31,14 @@ object PartyTracker : Module(
     category = Category.DUNGEON,
     description = "Tracks cleared rooms and secrets gotten by party members and displays the stats at the end of the run."
 ) {
+    private val compactMessage = BooleanSetting("Compact Message", false, description = "Shortens the message at the end of the run.")
+
+    init {
+        this.addSettings(
+            compactMessage
+        )
+    }
+
     /**
      * Used to keep track of which players where in which rooms when they were cleared.
      */
@@ -90,11 +102,11 @@ object PartyTracker : Module(
                     val currentSecrets = teammate.fetchTotalSecretsFromApi()
                     if (teammate.secretsAtRunStart != null && currentSecrets != null) {
                         "${currentSecrets - teammate.secretsAtRunStart!!}"
-                    } else "Unknown"
+                    } else "unknown"
                 }
+                // The IDE will tell you here that the "'Deferred' result is unused". This is not the case, ignore the warning.
                 jobMap.put(teammate, job)
             }
-
 
             jobMap.forEach teamMates@{ (teammate, secretsJob) ->
                 val clearedRoomsComponent = getClearedRoomsComponent(teammate)
@@ -105,18 +117,24 @@ object PartyTracker : Module(
                 }) ", did trap " else ""
                 val trapComponent: IChatComponent = ChatComponentText(trapText)
 
+                val collectedSecrets = secretsJob.await()
                 val secretComponent: IChatComponent = ChatComponentText(
-                    "and collected ${secretsJob.await()} Secrets. "
+                    ", ${if (compactMessage.enabled) "" else "collected "}§a$collectedSecrets§r Secret${if (collectedSecrets == "1") "" else "s"}§r"
                 )
                 val visitedRoomsComponent = getRoomTimesComponent(teammate)
 
+                val deathsComponent = ChatComponentText(
+                    "${if (compactMessage.enabled) "," else " and had"} §c${if (teammate.deaths == 0) "§2no" else teammate.deaths}§r Death" +
+                            "${if (teammate.deaths == 1) "" else "s"}.§r"
+                )
 
-                val message: IChatComponent = ChatComponentText("${coloredPlayerName(teammate)} ")
+
+                val message: IChatComponent = visitedRoomsComponent
                     .appendSibling(clearedRoomsComponent)
                     .appendSibling(compltedPuzzlesComponent)
                     .appendSibling(trapComponent)
                     .appendSibling(secretComponent)
-                    .appendSibling(visitedRoomsComponent)
+                    .appendSibling(deathsComponent)
 
                 ChatUtils.modMessage(message)
             } // ^ teammates loop
@@ -164,7 +182,7 @@ object PartyTracker : Module(
             RoomType.FAIRY -> EnumChatFormatting.LIGHT_PURPLE
             RoomType.ENTRANCE -> EnumChatFormatting.GREEN
             RoomType.TRAP -> EnumChatFormatting.GOLD
-            else -> EnumChatFormatting.GRAY
+            else -> EnumChatFormatting.WHITE
         }
     }
 
@@ -216,7 +234,7 @@ object PartyTracker : Module(
         }
 
         return ChatUtils.createHoverableText(
-            "§l§6[Hover for room times] §r",
+            "${coloredPlayerName(teammate)}${if (compactMessage.enabled) ":" else ""} §r",
             hoverTextBuilder.toString()
         )
     }
@@ -241,7 +259,7 @@ object PartyTracker : Module(
         hoverTextBuilder.append("§l${coloredPlayerName(teammate)}'s Cleared Rooms:§r")
         clearedRooms.forEach { (roomData, playerList) ->
             val additionalInfo = if (playerList.size > 1)
-                playerList.filter { it.name != teammate.name }.joinToString(", ", "§r with: "){ coloredPlayerName(it) }
+                playerList.filter { it.name != teammate.name }.joinToString(", ", "§r §7with: "){ coloredPlayerName(it) }
             else
                 ""
             hoverTextBuilder.append(
@@ -252,7 +270,7 @@ object PartyTracker : Module(
         else if (minClearedRooms == maxClearedRooms) "$minClearedRooms"
         else "$minClearedRooms-$maxClearedRooms"
         return ChatUtils.createHoverableText(
-            "cleared $roomNumber Room${if (roomNumber == "1") "" else "s"}, ",
+            "${if (compactMessage.enabled) "" else "cleared "}§6$roomNumber§r Room${if (roomNumber == "1") "" else "s"}, §r",
             hoverTextBuilder.toString()
         )
     }
@@ -277,7 +295,7 @@ object PartyTracker : Module(
         hoverTextBuilder.append("§l${coloredPlayerName(teammate)}'s Completed Puzzles:§r")
         completedPuzzles.forEach { (roomData, playerList) ->
             val additionalInfo = if (playerList.size > 1)
-                playerList.filter { it.name != teammate.name }.joinToString(", ", "§r with: "){ coloredPlayerName(it) }
+                playerList.filter { it.name != teammate.name }.joinToString(", ", "§r §7with: "){ coloredPlayerName(it) }
             else
                 ""
             hoverTextBuilder.append(
@@ -288,7 +306,7 @@ object PartyTracker : Module(
         else if (minCompletedPuzzles == maxCompletedPuzzles) "$minCompletedPuzzles"
         else "$minCompletedPuzzles-$maxCompletedPuzzles"
         return ChatUtils.createHoverableText(
-            "completed $puzzleNumber Puzzle${if (puzzleNumber == "1") "" else "s"} ",
+            "${if (compactMessage.enabled) "" else "did "}§d$puzzleNumber§r Puzzle${if (puzzleNumber == "1") "" else "s"}",
             hoverTextBuilder.toString()
         )
     }

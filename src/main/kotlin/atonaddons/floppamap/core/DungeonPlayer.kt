@@ -11,6 +11,7 @@ data class DungeonPlayer(var player: EntityPlayer, var name: String) {
     var yaw = 0f
     var icon = ""
     var dead = false
+    var deaths = 0
 
     /**
      * True when the field player is not the correct entity corresponding to this Player.
