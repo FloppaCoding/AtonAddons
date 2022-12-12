@@ -3,7 +3,6 @@ package atonaddons.floppamap.dungeon
 import atonaddons.AtonAddons
 import atonaddons.AtonAddons.Companion.inDungeons
 import atonaddons.AtonAddons.Companion.mc
-import atonaddons.AtonAddons.Companion.scope
 import atonaddons.events.DungeonEndEvent
 import atonaddons.events.RoomChangeEvent
 import atonaddons.floppamap.core.*
@@ -13,7 +12,6 @@ import atonaddons.module.impl.render.DungeonMap
 import atonaddons.utils.TabListUtils
 import atonaddons.utils.Utils.currentFloor
 import atonaddons.utils.Utils.equalsOneOf
-import kotlinx.coroutines.launch
 import net.minecraft.client.network.NetworkPlayerInfo
 import net.minecraft.util.StringUtils
 import net.minecraftforge.client.event.ClientChatReceivedEvent
@@ -33,29 +31,6 @@ import kotlin.math.abs
  */
 object Dungeon {
 
-    /*
-     TODO rework the way how RoomData or tiles in general are handled.
-      Good features of the current system that should be kept are:
-       - The RoomData is the same object for connected rooms and can be used to identify connected rooms.
-       - The RoomData is used flexibly to update Puzzle names from the tab list.
-      Problems that have to be resolved:
-       - Currently there is the issue that the Dungeon scan will override the map based scan in MapUpdate.
-         This overrides the entire Tile and RoomData
-       - To make Puzzle names be changeable RoomData fields have become var instead of val. This is bad because the
-         RoomData should be only data retrieved from the config and not changeable.
-       - The current system does not allow to store extra variable information for the rooms.
-         It could in theory be stored for each Room individually but that would have the issue of it being not synced
-         between neighboring Tiles of the same room.
-      Possible Solution:
-       - Replacing the data Field of type RoomData within the Room Class with a new field of a new Type.
-         That new type should have one nullable var field that stores RoomData.
-       - All values within RoomData should again be val and not var.
-       - The RoomData value in the new class can be null when no data from the scan is available.
-       - The new type can contain various variable values that can be changed during the run, such as an identifier,
-         current secret count, etc.
-
-     */
-
     const val roomSize = 32
     const val startX = -185
     const val startZ = -185
@@ -68,6 +43,13 @@ object Dungeon {
     var inBoss = false
     // 6 x 6 room grid, 11 x 11 with connections
     val dungeonList = Array<Tile?>(121) { null }
+    /**
+     * Gets the corresponding value from [dungeonList] but first performs a check whether the indices are in range.
+     */
+    fun getDungeonTile(row: Int, column: Int) : Tile?{
+        if (row !in 0..10 || column !in 0..10) return null
+        return dungeonList[row*11 + column]
+    }
 
     /**
      * Contains all the teammates in the current dungeon.
@@ -75,9 +57,8 @@ object Dungeon {
      */
     val dungeonTeammates = mutableListOf<DungeonPlayer>()
 
-    var witherDoors = 0
-
     private val deathPattern = Regex("^ ☠ (?<name>\\w+) .+ and became a ghost")
+    private val secretsPattern = Regex("([0-9]+)/([0-9]+) Secrets")
 
     /**
      * Contains the current room. Updated every tick.
@@ -109,13 +90,13 @@ object Dungeon {
             currentRoom = newRoom
         }
 
-        scope.launch {
+//        scope.launch {
             getDungeonTabList()?.let {
                 MapUpdate.updatePlayers(it)
                 RunInformation.updateRunInformation(it)
             }
             MapUpdate.updateRooms()
-        }
+//        }
 
         // added check to determine whether in boss based on coordinates. This is relevant when blood is being skipped.
         // this also makes the chat message based detection obsolete
@@ -132,33 +113,50 @@ object Dungeon {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     fun onChat(event: ClientChatReceivedEvent) {
-        if (!inDungeons || event.type.toInt() == 2) return
+        if (!inDungeons) return
         val text = StringUtils.stripControlCodes(event.message.unformattedText)
-        when {
-            text.equalsOneOf(
-                "Dungeon starts in 4 seconds.", "Dungeon starts in 4 seconds. Get ready!"
-            ) -> MapUpdate.preloadHeads()
+        if (event.type.toInt() != 2) { //type:: 0 : Standard Text Message; 1 : 'System' message, displayed as standard text.
+            when {
+                text.equalsOneOf(
+                    "Dungeon starts in 4 seconds.", "Dungeon starts in 4 seconds. Get ready!"
+                ) -> MapUpdate.preloadHeads()
 
-            text == "[NPC] Mort: Here, I found this map when I first entered the dungeon." -> {
-                MapUpdate.calibrate()
-                hasRunStarted = true
+                text == "[NPC] Mort: Here, I found this map when I first entered the dungeon." -> {
+                    MapUpdate.calibrate()
+                    hasRunStarted = true
+                }
+                entryMessages.any { it == text } -> inBoss = true
+                text == "                             > EXTRA STATS <" -> {
+                    MinecraftForge.EVENT_BUS.post(DungeonEndEvent())
+                }
+                text.contains("☠") -> {
+                    val matcher = deathPattern.find(text)
+                    val deadName = matcher?.groups?.get("name")?.value
+                    dungeonTeammates.find {
+                        if (deadName.equals("you", true)) it.name == mc.thePlayer.name else it.name == deadName
+                    }?.apply { deaths++ }
+                }
             }
-            entryMessages.any { it == text } -> inBoss = true
-            text == "                             > EXTRA STATS <" -> {
-                MinecraftForge.EVENT_BUS.post(DungeonEndEvent())
-            }
-            text.contains("☠") -> {
-                val matcher = deathPattern.find(text)
-                val deadName = matcher?.groups?.get("name")?.value
-                dungeonTeammates.find {
-                    if (deadName.equals("you", true)) it.name == mc.thePlayer.name else it.name == deadName
-                }?.apply{ deaths++ }
+        }else if (event.type.toInt() == 2) { //Action bar
+            val matcher = secretsPattern.find(text)
+            if (matcher != null) {
+                /*
+                This part is supposed to take care of setting the correct secrets for the room.
+                Dont do this for now.
+                It will mess up the api based calculation.
+                Should be added at some point, but is a bit tricky.
+
+                currentRoom?.data?.currentSecrets = matcher.groupValues[1].toInt()
+                */
+
+                currentRoom?.data?.maxSecrets = matcher.groupValues[2].toInt()
             }
         }
     }
 
     /**
      * Update visited rooms when room is changed.
+     * This event is posted whenever you, the Player, change the Tile you are in.
      */
     @SubscribeEvent
     fun onRoomChange(event: RoomChangeEvent) {
@@ -238,7 +236,6 @@ object Dungeon {
 
         dungeonList.fill(null)
 
-        witherDoors = 0
         RunInformation.reset()
     }
 }

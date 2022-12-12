@@ -217,6 +217,13 @@ object MapRender: HudElement(
                     ) {
                         name.addAll(tile.data.name.split(" "))
                     }
+                    // Room Secrets
+                    if (tile.canHaveSecrets) {
+                        val maxSecrets = if (tile.visited) tile.data.maxSecrets?.toString() ?: "?" else "?"
+                        name.add(
+                            "${tile.data.currentSecrets}/${maxSecrets}"
+                        )
+                    }
 
                     val color = if (MapRooms.mapColorText.enabled) when (tile.state) {
                         RoomState.GREEN -> 0x55ff55
@@ -261,18 +268,12 @@ object MapRender: HudElement(
     }
 
     private fun renderPlayerHeads() {
-        if (Dungeon.dungeonTeammates.isEmpty()) {
-            RenderUtils.drawPlayerHead(DungeonPlayer(mc.thePlayer, mc.thePlayer.name).apply {
-                yaw = mc.thePlayer.rotationYawHead
-            })
-        } else {
-            // Try catch because the dungeonTeammates get updated in a coroutine.
-            try {
-                for (player in Dungeon.dungeonTeammates) {
-                    RenderUtils.drawPlayerHead(player)
-                }
-            }catch (_: ConcurrentModificationException) {}
-        }
+        // Try catch because the dungeonTeammates get updated in a coroutine.
+        try {
+            for (player in Dungeon.dungeonTeammates) {
+                RenderUtils.drawPlayerHead(player)
+            }
+        }catch (_: ConcurrentModificationException) {}
     }
 
     private fun drawRoomConnector(

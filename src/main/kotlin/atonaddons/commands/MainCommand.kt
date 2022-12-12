@@ -5,6 +5,7 @@ import atonaddons.AtonAddons.Companion.clickGUI
 import atonaddons.AtonAddons.Companion.display
 import atonaddons.AtonAddons.Companion.mc
 import atonaddons.AtonAddons.Companion.scope
+import atonaddons.floppamap.core.Room
 import atonaddons.floppamap.core.RoomConfigData
 import atonaddons.floppamap.dungeon.Dungeon
 import atonaddons.floppamap.dungeon.DungeonScan
@@ -84,10 +85,19 @@ object MainCommand : CommandBase() {
                 modMessage("$secrets")
             }
             "test" -> {
-
-                Dungeon.dungeonTeammates.forEach {
-                    chatMessage(it.name)
+                if (args.size <= 1 ) return
+                val name = args[1]
+                val tiles = Dungeon.dungeonList
+                    .filterIsInstance<Room>()
+                    .filter {it.data.name.contains(name) }
+                val uniques = tiles.filter { it.isUnique }
+                modMessage("${uniques.size} uniques out of ${tiles.size} total")
+                tiles.forEach {
+                    val same = it.data === uniques.firstOrNull()?.data
+                    modMessage("$same, ${it.data.currentSecrets}, ${it.x}/${it.z}")
                 }
+
+
             }
             else            -> {
                 modMessage("Command not recognized!")

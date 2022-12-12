@@ -35,6 +35,7 @@ object DungeonScan {
      */
     fun scanDungeon() {
         var allLoaded = true
+        var updateConnection = false
 
         scan@ for (x in 0..10) {
             for (z in 0..10) {
@@ -64,10 +65,16 @@ object DungeonScan {
                         }
                     }else {
                         Dungeon.dungeonList[z * 11 + x] = newTile
+                        if (newTile is Room && newTile.data.type == RoomType.NORMAL) updateConnection = true
                     }
                 }
             }
         }
+
+        if (updateConnection) {
+            MapUpdate.synchConnectedRooms()
+        }
+
         if (allLoaded) {
             Dungeon.fullyScanned = true
         }
@@ -75,7 +82,6 @@ object DungeonScan {
 
     /**
      * Creates a dungeon Tile instance from the World.
-     * Also takes care of combining the data of neighbouring rooms.
      * This is achieved by scanning the blocks in the column specified by [x] and [z].
      * Returns null when the column is air.
      */
@@ -88,10 +94,7 @@ object DungeonScan {
             rowEven && columnEven -> {
                 val core = getCore(x, z)
                 getRoomConfigData(core)?.let { configData ->
-                    // Connect the tile to neighboring ones.
-                    val data = MapUpdate.getAndSynchDataFromNeighborOrNew(row, column) { RoomData(configData) }
-                    // Update the configData
-                    data.configData = configData
+                    val data = RoomData(configData)
 
                     Room(x, z, data).apply { this.core = core }
                 }

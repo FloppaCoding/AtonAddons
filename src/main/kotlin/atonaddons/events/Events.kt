@@ -1,6 +1,5 @@
 package atonaddons.events
 
-import atonaddons.floppamap.core.DungeonPlayer
 import atonaddons.floppamap.core.Room
 import atonaddons.floppamap.core.RoomState
 import atonaddons.floppamap.core.Tile
@@ -34,7 +33,7 @@ class EntityRemovedEvent(val entity: Entity) : Event()
 //<editor-fold desc="Dungeon Events">
 
 /**
- * Fired in Dungeon.kt whenever the room is changed.
+ * Fired in [Dungeon.onTick] whenever the room is changed.
  */
 class RoomChangeEvent(val newRoom: Room?, val oldRoom: Room?) : Event()
 
@@ -45,18 +44,13 @@ class RoomChangeEvent(val newRoom: Room?, val oldRoom: Room?) : Event()
 class DungeonSecretEvent : Event()
 
 /**
- * Fired in [MapUpdate.updatePlayers] when a new dungeon teammate is added to the start of the run.
- */
-class DungeonTeammateAddEvent(val dungeonPlayer: DungeonPlayer) : Event()
-
-/**
  * Fired in [Dungeon.onChat] when the "> EXTRA STATS <" message is received.
  */
 class DungeonEndEvent : Event()
 
 /**
  * Posted in [MapUpdate.updateRooms] right before the state of a Tile is changed.
- * The old state is still contained in [tile] as [tile.state].
+ * The old state is still contained in [tile] as [Tile.state].
  */
 class DungeonRoomStateChangeEvent(val tile: Tile, val newState: RoomState) : Event()
 

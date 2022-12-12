@@ -1,65 +1,156 @@
 package atonaddons.floppamap.core
 
+import atonaddons.AtonAddons
+import atonaddons.AtonAddons.Companion.scope
 import atonaddons.floppamap.dungeon.Dungeon
 import atonaddons.floppamap.utils.MapUtils
+import atonaddons.floppamap.utils.MapUtils.mapX
+import atonaddons.floppamap.utils.MapUtils.mapZ
+import atonaddons.floppamap.utils.MapUtils.yaw
 import atonaddons.utils.HypixelApiUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import net.minecraft.entity.player.EntityPlayer
+import net.minecraft.util.Vec4b
 
-data class DungeonPlayer(var player: EntityPlayer, var name: String) {
+/**
+ * Class to store information about dungeon teammates.
+ * The Player will also be handled in this way as a teammate.
+ *
+ * This class also contains methods to update and track teammate data.
+ * [updatePlayerAndRoom] handles updating the found secrets on the map.
+ *
+ * @author Aton
+ */
+class DungeonPlayer(var player: EntityPlayer, var name: String,
+    /**
+     * True when the field player is not the correct entity corresponding to this Player.
+     */
+                    var fakeEntity: Boolean = false
+) {
     var mapX = 0.0
     var mapZ = 0.0
     var yaw = 0f
     var icon = ""
     var dead = false
     var deaths = 0
+    var secretsAtRunStart: Int? = null
 
     /**
-     * True when the field player is not the correct entity corresponding to this Player.
+     * Stores the index of the room the player is currently in within the [Dungeon.dungeonList].
+     * This index will still point to the correct tile even when the tile is overwritten by the scan.
+     * Get the corresponding Room from [currentRoom].
+     *
+     * There is no check what kind of tile this is.
+     * Will also hold an index when no room is loaded in for the tile yet.
      */
-    var fakeEntity = false
+    var currentRoomIndex: Int? = null
+     private set
 
-    // Player tracking
-    var secretsAtRunStart: Int? = null
+    /**
+     * Gets the room this DungeonPlayer is currently in.
+     * Does not include boss room.
+     * This method is meant to be used to track the position of the dungeon teammates and not the Player.
+     *
+     * Not to be confused with [Dungeon.currentRoom].
+     */
+    val currentRoom: Room?
+     get() = (currentRoomIndex?.let{Dungeon.dungeonList[it]} as? Room)
 
     /**
      * Maps the index of the tile in [Dungeon.dungeonList] to the count of ticks the player spent in that Tile.
      * The key -1 is used for time spent dead in clear.
-     * @see getCurrentRoomIndex
+     * @see currentRoomIndex
      */
     val visitedTileTimes: MutableMap<Int, Int> = mutableMapOf()
 
+    private var lastSecretCheck: SecretCheck = SecretCheck(null, null, null, 0L)
+    private var pending: Boolean = false
+
+    init {
+        if (!fakeEntity) {
+            scope.launch(Dispatchers.IO) { secretsAtRunStart = fetchTotalSecretsFromApi() }
+        }
+    }
+
+    /**
+     * Updates the teammates position and the secrets in the room they are in.
+     */
+    fun updatePlayerAndRoom(decor: Map<String, Vec4b>?) {
+        // Update the position in the world
+        val player = AtonAddons.mc.theWorld.playerEntities.find { it.name == this.name }
+        // when the player is in render distance, use that data instead of the map item
+        if (player != null) {
+            // check whether the player is in the map; probably not needed
+            if ( player.posX > -200 && player.posX < -10 && player.posZ > -200 && player.posZ < -10) {
+                this.mapX = (player.posX - Dungeon.startX + 15) * MapUtils.coordMultiplier + MapUtils.startCorner.first - 2
+                this.mapZ = (player.posZ - Dungeon.startZ + 15) * MapUtils.coordMultiplier + MapUtils.startCorner.second - 2
+                this.yaw = player.rotationYawHead
+            }
+        }else {
+            //if no data from the map item is present go to the next player
+            if (decor != null) {
+                decor.entries.find { (icon, _) -> icon == this.icon }?.let { (_, vec4b) ->
+                    this.mapX = vec4b.mapX.toDouble()
+                    this.mapZ = vec4b.mapZ.toDouble()
+                    this.yaw = vec4b.yaw
+                }
+            }
+        }
+
+        // Update the current room and info about it.
+        val newIndex = getCurrentRoomIndex()
+        val oldRoom = currentRoom
+        val shouldUpdateSecrets = Dungeon.hasRunStarted &&  !pending &&
+                (System.currentTimeMillis() > lastSecretCheck.timeMS + 5000
+                    || ( newIndex != currentRoomIndex && oldRoom?.data?.name != (newIndex?.let{Dungeon.dungeonList[it]} as? Room)?.data?.name ))
+        currentRoomIndex = newIndex
+        updateVisitedTileTimes()
+        if (shouldUpdateSecrets ) {
+            updateRoomSecrets(oldRoom)
+        }
+    }
+
+    /**
+     * Updates the secrets within [oldRoom] from the total collected secrets if possible.
+     * @param oldRoom the room the player was in previously.
+     */
+    private fun updateRoomSecrets(oldRoom: Room?) {
+        scope.launch(Dispatchers.IO) {
+            if (oldRoom == null && currentRoom == null) return@launch
+            val oldSecretCheck = lastSecretCheck
+            pending = true
+            val newSecrets = fetchTotalSecretsFromApi(oldRoom)
+            pending = false
+            if (oldRoom != null && oldRoom.data.name == oldSecretCheck.newRoom?.data?.name && newSecrets != null && oldSecretCheck.secrets != null) {
+                val difference = newSecrets - oldSecretCheck.secrets
+                oldRoom.data.currentSecrets += difference
+            }
+        }
+    }
+
+    /**
+     * Increments the tick count this player spent in the current Tile in [visitedTileTimes].
+     * Dead time is counted with index -1.
+     */
+    private fun updateVisitedTileTimes() {
+        val index = if (dead) -1 else currentRoomIndex ?: return
+        visitedTileTimes[index] = (visitedTileTimes[index] ?: 0) + 1
+    }
+
     /**
      * Fetches the total collected secrets for the player from the API.
+     * Run this with the IO dispatcher [Dispatchers.IO].
      *
      * Only use this method within a coroutine to not freeze the main thread.
+     * @param oldRoom when this method is called on room change this will be the room the player was in previously.
      * @return The total secrets collected by this player, or null if no information could be retrieved.
      */
-    suspend fun fetchTotalSecretsFromApi(): Int? {
-        return HypixelApiUtils.getSecrets(player.uniqueID.toString())
-    }
-
-    /**
-     * Fetches the total collected secrets for the player from the API and writes it to the field.
-     *
-     * Only use this method within a coroutine to not freeze the main thread.
-     */
-    suspend fun fetchAndSetTotalSecrets() {
-        secretsAtRunStart = fetchTotalSecretsFromApi()
-    }
-
-    /**
-     * Returns the room the player is currently in.
-     * Does not include boss room.
-     * This method is meant to be used to track the position of the dungeon teammates and not the Player.
-     *
-     * Not to be confused with [Dungeon.getCurrentRoom].
-     */
-    @JvmName("getCurrentRoomFromCoordinates")
-    fun getCurrentRoom(): Room? {
-        val index = getCurrentRoomIndex() ?: return null
-        val room = Dungeon.dungeonList.getOrNull(index)
-        if (room !is Room) return null
-        return room
+    suspend fun fetchTotalSecretsFromApi(oldRoom: Room? = null): Int? {
+        val time = System.currentTimeMillis()
+        val secrets = HypixelApiUtils.getSecrets(player.uniqueID.toString())
+        lastSecretCheck = SecretCheck(secrets, currentRoom, oldRoom, time)
+        return secrets
     }
 
     /**
@@ -69,7 +160,8 @@ data class DungeonPlayer(var player: EntityPlayer, var name: String) {
      * There is no check what kind of tile this is.
      * Will also return an index when no room is loaded in for the tile yet.
      */
-    fun getCurrentRoomIndex(): Int? {
+    @JvmName("getCurrentRoomIndexFromCoordinates")
+    private fun getCurrentRoomIndex(): Int? {
         if (Dungeon.inBoss) return null
         // Note the shr 5 ( / 32 ) instead of the usual shr 4 here. This ensures that only rooms can be pointed to.
         // But also means that the x and z values here are half of the column and row.
@@ -80,13 +172,14 @@ data class DungeonPlayer(var player: EntityPlayer, var name: String) {
     }
 
     /**
-     * Has to be run on a by tick basis!
-     *
-     * Increments the tick count this player spent in the current Tile in [visitedTileTimes].
-     * Dead time is counted with index -1.
+     * Class to store the data from the last time the secret count was checked for this player from the api.
      */
-    fun updateVisitedTileTimes() {
-        val index = if (dead) -1 else getCurrentRoomIndex() ?: return
-        visitedTileTimes[index] = (visitedTileTimes[index] ?: 0) + 1
-    }
+    private data class SecretCheck(
+        val secrets: Int?,
+        /** The room the player is currently in.*/
+        val newRoom: Room?,
+        /** When changing room, this is the room the player was in last. Otherwise null. */
+        val oldRoom: Room?,
+        val timeMS: Long
+    )
 }

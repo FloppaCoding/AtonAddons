@@ -1,20 +1,16 @@
 package atonaddons.module.impl.dungeon
 
-import atonaddons.AtonAddons.Companion.inDungeons
 import atonaddons.AtonAddons.Companion.scope
 import atonaddons.events.DungeonEndEvent
 import atonaddons.events.DungeonRoomStateChangeEvent
-import atonaddons.events.DungeonTeammateAddEvent
 import atonaddons.floppamap.core.*
 import atonaddons.floppamap.dungeon.Dungeon
-import atonaddons.floppamap.dungeon.MapUpdate
 import atonaddons.module.Category
 import atonaddons.module.Module
 import atonaddons.module.settings.impl.BooleanSetting
 import atonaddons.utils.ChatUtils
 import atonaddons.utils.TabListUtils
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import net.minecraft.util.ChatComponentText
@@ -23,8 +19,6 @@ import net.minecraft.util.IChatComponent
 import net.minecraftforge.event.world.WorldEvent
 import net.minecraftforge.fml.common.eventhandler.EventPriority
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import net.minecraftforge.fml.common.gameevent.TickEvent
-import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent
 
 object PartyTracker : Module(
     "Party Tracker",
@@ -47,31 +41,6 @@ object PartyTracker : Module(
     private val unidentifiedRoomData = RoomData("Unidentified", RoomType.UNKNOWN)
 
     /**
-     * Get the total secrets a player has collected from the Hypixel API when the player is added to the list of dungeon
-     * teammates and save that value.
-     * @see MapUpdate.updatePlayers
-     */
-    @SubscribeEvent
-    fun onTeammateAdd(event: DungeonTeammateAddEvent){
-        scope.launch(Dispatchers.IO) { event.dungeonPlayer.fetchAndSetTotalSecrets() }
-    }
-
-    /**
-     * Update the visited Tiles.
-     */
-    @SubscribeEvent
-    fun onTick(event: ClientTickEvent) {
-        if (event.phase != TickEvent.Phase.START) return
-        if (!inDungeons) return
-        val iterator = Dungeon.dungeonTeammates.iterator()
-        try {
-            while (iterator.hasNext()) {
-                iterator.next().updateVisitedTileTimes()
-            }
-        }catch (_ : ConcurrentModificationException) {}
-    }
-
-    /**
      * Keep track of the rooms a player has cleared.
      */
     @SubscribeEvent
@@ -82,7 +51,7 @@ object PartyTracker : Module(
         if (event.newState == RoomState.CLEARED
             || event.newState == RoomState.GREEN && event.tile.state != RoomState.CLEARED) {
             val playersInRoom = Dungeon.dungeonTeammates.filter { teamMate ->
-                !teamMate.dead && teamMate.getCurrentRoom()?.data == event.tile.data
+                !teamMate.dead && teamMate.currentRoom?.data == event.tile.data
             }
             // also add when the list is empty. This might still be useful information.
             roomClearers[event.tile.data] = playersInRoom
@@ -104,8 +73,7 @@ object PartyTracker : Module(
                         "${currentSecrets - teammate.secretsAtRunStart!!}"
                     } else "unknown"
                 }
-                // The IDE will tell you here that the "'Deferred' result is unused". This is not the case, ignore the warning.
-                jobMap.put(teammate, job)
+                jobMap[teammate] = job
             }
 
             jobMap.forEach teamMates@{ (teammate, secretsJob) ->

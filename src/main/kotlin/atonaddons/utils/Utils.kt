@@ -71,6 +71,12 @@ object Utils {
         return removed
     }
 
+    inline fun <K, V> Map<out K, V>.firstOrNull(predicate: (Map.Entry<K, V>) -> Boolean): V? {
+        if (isEmpty()) return null
+        for (element in this) if (predicate(element)) return element.value
+        return null
+    }
+
     /**
      * The current dungeon floor (1..7) or null if not in dungeon
      * @see RunInformation
