@@ -168,7 +168,7 @@ class DungeonPlayer(var player: EntityPlayer, var name: String,
         val x = (((mapX + 2 - MapUtils.startCorner.first) / MapUtils.coordMultiplier ).toInt() shr 5)
         val z = (((mapZ + 2 - MapUtils.startCorner.second) / MapUtils.coordMultiplier).toInt() shr 5)
         if (x<0 || x > 5 || z < 0 || z > 5) return null
-        return x * 2 + z * 22
+        return x * 22 + z * 2
     }
 
     /**

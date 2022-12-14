@@ -37,19 +37,19 @@ object DungeonScan {
         var allLoaded = true
         var updateConnection = false
 
-        scan@ for (x in 0..10) {
-            for (z in 0..10) {
-                val xPos = Dungeon.startX + x * (Dungeon.roomSize shr 1)
-                val zPos = Dungeon.startZ + z * (Dungeon.roomSize shr 1)
+        scan@ for (column in 0..10) {
+            for (row in 0..10) {
+                val xPos = Dungeon.startX + column * (Dungeon.roomSize shr 1)
+                val zPos = Dungeon.startZ + row * (Dungeon.roomSize shr 1)
 
                 if (!mc.theWorld.getChunkFromChunkCoords(xPos shr 4, zPos shr 4).isLoaded) {
                     allLoaded = false
                     continue
                 }
 
-                if (Dungeon.dungeonList[z * 11 + x]?.scanned == true) continue
-                getRoomFromWorld(xPos, zPos, z, x)?.let { newTile ->
-                    val oldTile = Dungeon.dungeonList[z * 11 + x]
+                if (Dungeon.dungeonList[column * 11 + row]?.scanned == true) continue
+                getRoomFromWorld(xPos, zPos, column, row)?.let { newTile ->
+                    val oldTile = Dungeon.dungeonList[column * 11 + row]
                     // When the tile is already scanned from the map item make sure to not overwrite it.
                     // Instead just update the values.
                     if (oldTile != null) {
@@ -60,11 +60,11 @@ object DungeonScan {
                         if (oldTile is Room && newTile is Room) { // Rooms
                             oldTile.data.configData = newTile.data.configData
                             oldTile.core = newTile.core
-                        }else { // Doors
+                        } else { // Doors
                             oldTile.scanned = true
                         }
-                    }else {
-                        Dungeon.dungeonList[z * 11 + x] = newTile
+                    } else {
+                        Dungeon.dungeonList[column * 11 + row] = newTile
                         if (newTile is Room && newTile.data.type == RoomType.NORMAL) updateConnection = true
                     }
                 }
@@ -85,13 +85,13 @@ object DungeonScan {
      * This is achieved by scanning the blocks in the column specified by [x] and [z].
      * Returns null when the column is air.
      */
-    private fun getRoomFromWorld(x: Int, z: Int, row: Int, column: Int): Tile? {
+    private fun getRoomFromWorld(x: Int, z: Int, column: Int, row: Int): Tile? {
         if (isColumnAir(x, z)) return null
         val rowEven = row and 1 == 0
         val columnEven = column and 1 == 0
 
         return when {
-            rowEven && columnEven -> {
+            rowEven && columnEven -> { // Room
                 val core = getCore(x, z)
                 getRoomConfigData(core)?.let { configData ->
                     val data = RoomData(configData)
@@ -99,14 +99,14 @@ object DungeonScan {
                     Room(x, z, data).apply { this.core = core }
                 }
             }
-            !rowEven && !columnEven -> {
-                Dungeon.dungeonList[(row - 1) * 11 + column - 1]?.let {
+            !rowEven && !columnEven -> {  // possible separator (only for 2x2)
+                Dungeon.getDungeonTile(column - 1, row - 1)?.let {
                     if (it is Room) {
                         Room(x, z, it.data).apply { isSeparator = true }
                     } else null
                 }
             }
-            isDoor(x, z) -> {
+            isDoor(x, z) -> { // Door
                 val bState = mc.theWorld.getBlockState(BlockPos(x, 69, z))
                 val doorType = when {
                     bState.block == Blocks.coal_block -> DoorType.WITHER
@@ -118,8 +118,9 @@ object DungeonScan {
                 }
                 Door(x, z, doorType)
             }
-            else -> {
-                Dungeon.dungeonList[if (rowEven) row * 11 + column - 1 else (row - 1) * 11 + column]?.let {
+            else -> { // Possible separator
+                (if (rowEven) Dungeon.getDungeonTile(column - 1, row)
+                else Dungeon.getDungeonTile(column, row - 1))?.let {
                     if (it is Room) {
                         if (it.data.type == RoomType.ENTRANCE) {
                             Door(x, z, DoorType.ENTRANCE)

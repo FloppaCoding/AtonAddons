@@ -107,7 +107,7 @@ object MapUpdate {
     private fun updatePuzzleNames() {
         val puzzles = Dungeon.dungeonList.filterIsInstance<Room>()
             .filter { room -> !room.isSeparator && room.data.type == RoomType.PUZZLE && room.state.revealed  }
-            .sortedBy { room -> room.column*11 + room.row }
+            .sortedBy { room -> room.column*11 + room.row } // This is probably redundant since this is already the sort order of dungeonList
         if (RunInformation.puzzles.size == puzzles.size) {
             RunInformation.puzzles.withIndex().forEach { (index, puzzlePair) -> puzzles[index].data.name = puzzlePair.first }
             unmappedPuzz = false
@@ -131,14 +131,14 @@ object MapUpdate {
         val centerOffset = (MapUtils.roomSize shr 1)
         val increment = (MapUtils.roomSize shr 1) + 2
 
-        for (x in 0..10) {
-            for (z in 0..10) {
-                var tile = Dungeon.dungeonList[z * 11 + x]
+        for (column in 0..10) {
+            for (row in 0..10) {
+                var tile = Dungeon.dungeonList[column * 11 + row]
 
                 //If room unknown try to get it from the map item.
                 if (tile == null || (tile.state == RoomState.QUESTION_MARK && !tile.scanned)) {
-                    getRoomFromMap(z, x, mapColors)?.let { newTile ->
-                        Dungeon.dungeonList[z * 11 + x] = newTile
+                    getRoomFromMap(column, row, mapColors)?.let { newTile ->
+                        Dungeon.dungeonList[column * 11 + row] = newTile
 
                         if (newTile is Room && newTile.data.type == RoomType.NORMAL) shouldConnectRooms = true
 
@@ -156,10 +156,10 @@ object MapUpdate {
                 }
 
                 // Scan the room centers on the map for check marks.
-                tile = Dungeon.dungeonList[z * 11 + x]
+                tile = Dungeon.dungeonList[column * 11 + row]
                 if (tile != null) {
-                    val centerX = startX + x * increment + centerOffset
-                    val centerZ = startZ + z * increment + centerOffset
+                    val centerX = startX + column * increment + centerOffset
+                    val centerZ = startZ + row * increment + centerOffset
                     if (centerX >= 128 || centerZ >= 128) continue
                     val newState = when (mapColors[(centerZ shl 7) + centerX].toInt()) {
                         0 -> RoomState.UNDISCOVERED
@@ -206,7 +206,7 @@ object MapUpdate {
     /**
      * Gets a dungeon tile from the map item.
      */
-    private fun getRoomFromMap(row: Int, column: Int, mapColors: ByteArray): Tile? {
+    private fun getRoomFromMap(column: Int, row: Int, mapColors: ByteArray): Tile? {
 
         val startX = MapUtils.startCorner.first
         val startZ = MapUtils.startCorner.second
@@ -248,7 +248,7 @@ object MapUpdate {
             }
             !rowEven && !columnEven -> { // possible separator (only for 2x2)
                 if(mapColors[(centerZ shl 7) + centerX].toInt() != 0){
-                    Dungeon.dungeonList[(row - 1) * 11 + column - 1]?.let {
+                    Dungeon.getDungeonTile(column-1, row-1)?.let {
                         if (it is Room) {
                             Room(xPos, zPos, it.data).apply { isSeparator = true }
                         } else null
@@ -258,7 +258,8 @@ object MapUpdate {
             else -> { // door or separator
                 // Check the "side" of the connector to see whether it is a connector
                 if (mapColors[( (if (rowEven) cornerZ else centerZ) shl 7) + (if (rowEven) centerX else cornerX)].toInt() != 0) { // separator
-                    Dungeon.dungeonList[if (rowEven) row * 11 + column - 1 else (row - 1) * 11 + column]?.let {
+                    (if (rowEven) Dungeon.getDungeonTile(column - 1, row)
+                    else Dungeon.getDungeonTile(column, row - 1))?.let {
                         if (it is Room) {
                             Room(xPos, zPos, it.data).apply { isSeparator = true }
                         } else null
@@ -287,12 +288,12 @@ object MapUpdate {
             if (tile !is Room) return@forEach
             if (tile.data.type != RoomType.NORMAL) return@forEach
             if (tile.isSeparator) return@forEach
-            val row = index / 11
-            val column = index % 11
+            val column = index / 11
+            val row = index % 11
 
             // If the tile is a room check neighboring tiles for data in the order left, top
-            val leftConnector = Dungeon.getDungeonTile(row, column-1) as? Room
-            val topConnector = Dungeon.getDungeonTile(row-1, column) as? Room
+            val leftConnector = Dungeon.getDungeonTile(column-1, row) as? Room
+            val topConnector = Dungeon.getDungeonTile(column, row-1) as? Room
             var finalData: RoomData? = null
             val bufferedDataTemporary: MutableSet<RoomData> = mutableSetOf()
             var gotDataFromLeft = false
@@ -300,7 +301,7 @@ object MapUpdate {
             // link the tile and connector to the correct data
             // this code could be compacted into a loop to reduce redundancy, but this form has better readability
             if (leftConnector?.isSeparator == true) {
-                val leftRoom = Dungeon.getDungeonTile(row, column-2) as? Room
+                val leftRoom = Dungeon.getDungeonTile(column-2, row) as? Room
                 if (leftRoom != null) {
                     gotDataFromLeft = true
                     finalData = leftRoom.data
@@ -310,7 +311,7 @@ object MapUpdate {
                 }
             }
             if (topConnector?.isSeparator == true) {
-                val topRoom = Dungeon.getDungeonTile(row-2, column) as? Room
+                val topRoom = Dungeon.getDungeonTile(column, row-2) as? Room
                 if (topRoom != null) {
                     if (gotDataFromLeft) {
                         bufferedDataTemporary.add(topRoom.data)

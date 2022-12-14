@@ -118,9 +118,9 @@ object MapRender: HudElement(
 
         val connectorSize = roomSize shr 2
 
-        for (y in 0..10) {
-            for (x in 0..10) {
-                val tile = Dungeon.dungeonList[y * 11 + x] ?: continue
+        for (x in 0..10) {
+            for (y in 0..10) {
+                val tile = Dungeon.dungeonList[x * 11 + y] ?: continue
                 if (tile.state == RoomState.UNDISCOVERED && !tile.visited) continue
 
                 val xOffset = (x shr 1) * (roomSize + connectorSize)
@@ -179,10 +179,10 @@ object MapRender: HudElement(
 
         val connectorSize = roomSize shr 2
 
-        for (y in 0..10 step 2) {
-            for (x in 0..10 step 2) {
+        for (x in 0..10 step 2) {
+            for (y in 0..10 step 2) {
 
-                val tile = Dungeon.dungeonList[y * 11 + x] ?: continue
+                val tile = Dungeon.dungeonList[x * 11 + y] ?: continue
 
                 if (tile.state == RoomState.UNDISCOVERED && !tile.visited) continue
 

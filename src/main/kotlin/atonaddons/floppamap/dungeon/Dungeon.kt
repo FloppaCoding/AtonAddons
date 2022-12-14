@@ -42,13 +42,44 @@ object Dungeon {
     var hasRunStarted = false
     var inBoss = false
     // 6 x 6 room grid, 11 x 11 with connections
+    /**
+     * This field stores all Tiles of the current dungeon in a 11x11 Array.
+     * To access a specific Tile [getDungeonTile] and [setDungeonTile] are generally the better option.
+     * <p>
+     * The fields in this array correspond to a 11x11 Grid over the Dungeon.
+     * This grid consists of  6 rows / columns for the Rooms and in between another 5 for connectors (Doors / separators
+     * for rooms consisting of more than one Tile). All the Rooms lay on an even row and column.
+     * The array index for a given column (corresponds to the tiles x coordinate) and
+     * row (corresponds to the tiles z coordinate) is 'column*11 + row'. This is the same sort order as used by Hypixel
+     * for Puzzle names on the tab list.
+     * </p>
+     */
     val dungeonList = Array<Tile?>(121) { null }
     /**
-     * Gets the corresponding value from [dungeonList] but first performs a check whether the indices are in range.
+     * Gets the corresponding Tile from [dungeonList] but first performs a check whether the indices are in range.
      */
-    fun getDungeonTile(row: Int, column: Int) : Tile?{
+    @JvmName("getDungeonTileDefault")
+    fun getDungeonTile(column: Int, row: Int) : Tile?{
+        return getDungeonTile<Tile>(column, row)
+    }
+
+    /**
+     * Gets the corresponding Tile from [dungeonList] but first performs a check whether the indices are in range.
+     * It is attempted to cast the Tile to [T], if not possible returns null.
+     */
+    fun <T : Tile> getDungeonTile(column: Int, row: Int) : T?{
         if (row !in 0..10 || column !in 0..10) return null
-        return dungeonList[row*11 + column]
+        @Suppress("UNCHECKED_CAST") // This cast is fine, but the compiler does not know this.
+        return (dungeonList[column*11 + row] as? T)
+    }
+
+    /**
+     * Sets the corresponding value from [dungeonList] but first performs a check whether the indices are in range.
+     */
+    fun setDungeonTile(column: Int, row: Int, tile: Tile?): Boolean{
+        if (row !in 0..10 || column !in 0..10) return false
+        dungeonList[column*11 + row] = tile
+        return true
     }
 
     /**
@@ -178,7 +209,7 @@ object Dungeon {
                 (event.newRoom.column + event.oldRoom.column) shr 1
             else return
         if (doorRow < 0 || doorRow > 11 || doorColumn < 0 || doorColumn < 11) return
-        (dungeonList[doorRow*11 + doorColumn] as? Door)?.let { door ->
+        getDungeonTile<Door>(doorColumn, doorRow)?.let { door ->
             door.visited = true
         }
     }
@@ -219,7 +250,7 @@ object Dungeon {
         }else {
             val x = ((mc.thePlayer.posX - startX + 15).toInt() shr 5)
             val z = ((mc.thePlayer.posZ - startZ + 15).toInt() shr 5)
-            dungeonList.getOrNull(x * 2 + z * 22)
+            dungeonList.getOrNull(x * 22 + z * 2)
         }
         if (room !is Room) return null
         return room

@@ -25,7 +25,7 @@ class Room(x: Int, z: Int, var data: RoomData) : Tile(x, z) {
      */
     val isUnique: Boolean
         get() {
-            return Dungeon.dungeonList.first { it is Room && !it.isSeparator && it.data.name == this.data.name } == this
+            return Dungeon.dungeonList.first { it is Room && !it.isSeparator && it.data === this.data } === this
         }
 
     val canHaveSecrets: Boolean
