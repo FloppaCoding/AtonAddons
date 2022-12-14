@@ -1,6 +1,6 @@
 package atonaddons.ui.hud
 
-import atonaddons.floppamap.utils.RenderUtils
+import atonaddons.floppamap.utils.HudRenderUtils
 import atonaddons.module.settings.impl.NumberSetting
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraftforge.client.event.RenderGameOverlayEvent
@@ -83,7 +83,7 @@ open class HudElement(
         GlStateManager.translate(x.toFloat(), y.toFloat(), 0f)
         GlStateManager.scale(scale.value, scale.value, 1.0)
 
-        RenderUtils.renderRect(
+        HudRenderUtils.renderRect(
             0.0,
             0.0,
             width.toDouble(),

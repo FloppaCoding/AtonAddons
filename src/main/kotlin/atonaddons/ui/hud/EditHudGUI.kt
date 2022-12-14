@@ -1,7 +1,7 @@
 package atonaddons.ui.hud
 
 import atonaddons.floppamap.dungeon.MapRender
-import atonaddons.floppamap.utils.RenderUtils
+import atonaddons.floppamap.utils.HudRenderUtils
 import atonaddons.module.impl.render.CoordinateDisplay
 import atonaddons.module.impl.render.DungeonWarpTimer
 import atonaddons.ui.clickgui.util.ColorUtil
@@ -66,7 +66,7 @@ object EditHudGUI : GuiScreen() {
         }else {
             Color(-0x44eaeaeb, true).darker()
         }
-        RenderUtils.renderRect(
+        HudRenderUtils.renderRect(
             boxX,
             boxY,
             boxWidth,

@@ -15,7 +15,7 @@ import net.minecraft.entity.player.EnumPlayerModelParts
 import org.lwjgl.opengl.GL11
 import java.awt.Color
 
-object RenderUtils {
+object HudRenderUtils {
 
     private val tessellator: Tessellator = Tessellator.getInstance()
     private val worldRenderer: WorldRenderer = tessellator.worldRenderer

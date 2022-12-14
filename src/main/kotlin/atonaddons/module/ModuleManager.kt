@@ -47,6 +47,7 @@ object ModuleManager {
         DungeonWarpTimer,
         DungeonMap,
         MapRooms,
+        DoorESP,
         CoordinateDisplay,
         NoFireOverlay,
         ItemAnimations,

@@ -6,7 +6,7 @@ import atonaddons.AtonAddons.Companion.mc
 import atonaddons.floppamap.core.*
 import atonaddons.floppamap.utils.MapUtils
 import atonaddons.floppamap.utils.MapUtils.roomSize
-import atonaddons.floppamap.utils.RenderUtils
+import atonaddons.floppamap.utils.HudRenderUtils
 import atonaddons.module.impl.render.DungeonMap
 import atonaddons.module.impl.render.MapRooms
 import atonaddons.shaders.impl.Chroma2D
@@ -48,7 +48,7 @@ object MapRender: HudElement(
         GlStateManager.enableBlend()
 
         // Background
-        RenderUtils.renderRect(
+        HudRenderUtils.renderRect(
             0.0,
             0.0,
             128.0,
@@ -57,7 +57,7 @@ object MapRender: HudElement(
         )
         // Border
         if (DungeonMap.chromaBorder.enabled) Chroma2D.useShader()
-        RenderUtils.renderRectBorder(
+        HudRenderUtils.renderRectBorder(
             0.0,
             0.0,
             128.0,
@@ -142,7 +142,7 @@ object MapRender: HudElement(
 
                 when {
                     xEven && yEven -> if (tile is Room) {
-                        RenderUtils.renderRect(
+                        HudRenderUtils.renderRect(
                             xOffset.toDouble(),
                             yOffset.toDouble(),
                             roomSize.toDouble(),
@@ -151,7 +151,7 @@ object MapRender: HudElement(
                         )
                     }
                     !xEven && !yEven -> {
-                        RenderUtils.renderRect(
+                        HudRenderUtils.renderRect(
                             xOffset.toDouble(),
                             yOffset.toDouble(),
                             (roomSize + connectorSize).toDouble(),
@@ -232,7 +232,7 @@ object MapRender: HudElement(
                     } else 0xffffff
 
                     // Offset + half of roomsize
-                    RenderUtils.renderCenteredText(name, xOffset + (roomSize shr 1), yOffset + (roomSize shr 1), color)
+                    HudRenderUtils.renderCenteredText(name, xOffset + (roomSize shr 1), yOffset + (roomSize shr 1), color)
                 }
             }
         }
@@ -271,7 +271,7 @@ object MapRender: HudElement(
         // Try catch because the dungeonTeammates get updated in a coroutine.
         try {
             for (player in Dungeon.dungeonTeammates) {
-                RenderUtils.drawPlayerHead(player)
+                HudRenderUtils.drawPlayerHead(player)
             }
         }catch (_: ConcurrentModificationException) {}
     }
@@ -291,7 +291,7 @@ object MapRender: HudElement(
         if (doorway) {
             if (vertical) y1 += doorwayOffset else x1 += doorwayOffset
         }
-        RenderUtils.renderRect(
+        HudRenderUtils.renderRect(
             x1.toDouble(), y1.toDouble(),
             (if (vertical) doorWidth else width).toDouble(),
             (if (vertical) width else doorWidth).toDouble(),
