@@ -46,6 +46,18 @@ Below you can see a preview of the gui.
 * Secret Chimes -- Play a sound whenever you get a secret.
 * Extra Stats -- Automatically shows extras stats at the end of a dungeon run.
 * Leap Highlights -- Highlights chosen target in the Spirit Leap menu.
+* Party Tracker -- Shows an overview of what your party members did, at the end of a Dungeon run.
+
+<details>
+  <summary>Screenshots</summary>
+
+![Party Tracker](./resources/partyTracker/PartyTracker__Simplified.png)
+![Rooms Hover](./resources/partyTracker/PartyTracker_ClearedHover.png)
+![Puzzle Hover](./resources/partyTracker/PartyTracker_PuzzleHover.png)
+![Room Times](./resources/partyTracker/PartyTracker_RoomTimeHover.png)
+
+</details>
+
 </details>
 
 <details>
@@ -56,6 +68,7 @@ Below you can see a preview of the gui.
 * Edit Hud
 * Dungeon Warp Timer -- A HUD element that shows you the cooldown on dungeon warps.
 * Dungeon Map -- A reliable dungeon map.
+* Dungeon  Wither/Blood Door ESP.
 * Coordinate HUD
 * Item Animations -- Change the appearance of held items.
 * No Fire Overlay
