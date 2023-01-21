@@ -11,6 +11,7 @@ import atonaddons.module.settings.impl.BooleanSetting
 import atonaddons.utils.ChatUtils
 import atonaddons.utils.TabListUtils
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import net.minecraft.util.ChatComponentText
@@ -67,7 +68,7 @@ object PartyTracker : Module(
             // fetch the collected secrets parallelized
             val jobMap = mutableMapOf<DungeonPlayer, Deferred<String>>()
             Dungeon.dungeonTeammates.forEach { teammate ->
-                val job: Deferred<String> = async {
+                val job: Deferred<String> = async(Dispatchers.IO) {
                     val currentSecrets = teammate.fetchTotalSecretsFromApi()
                     if (teammate.secretsAtRunStart != null && currentSecrets != null) {
                         "${currentSecrets - teammate.secretsAtRunStart!!}"

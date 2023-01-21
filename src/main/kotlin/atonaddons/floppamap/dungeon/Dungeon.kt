@@ -108,7 +108,7 @@ object Dungeon {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     fun onTick(event: TickEvent.ClientTickEvent) {
-        if (event.phase != TickEvent.Phase.START || !inDungeons) return
+        if (event.phase != TickEvent.Phase.START || !inDungeons || mc.thePlayer == null) return
         if (shouldScan()) {
             lastScanTime = System.currentTimeMillis()
             isScanning = true
