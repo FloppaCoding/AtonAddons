@@ -48,43 +48,6 @@ object RunInformation {
 
     var score = 0
 
-    private val requiredSecretPercentage: Map<Floor, Double> = mapOf(
-        Floor.E  to 30.0,
-        Floor.F1 to 30.0,
-        Floor.F2 to 40.0,
-        Floor.F3 to 50.0,
-        Floor.F4 to 60.0,
-        Floor.F5 to 70.0,
-        Floor.F6 to 85.0,
-        Floor.F7 to 100.0,
-        Floor.M1 to 100.0,
-        Floor.M2 to 100.0,
-        Floor.M3 to 100.0,
-        Floor.M4 to 100.0,
-        Floor.M5 to 100.0,
-        Floor.M6 to 100.0,
-        Floor.M7 to 100.0,
-    )
-
-    private val timeLimit: Map<Floor, Int> = mapOf(
-        Floor.E  to 600,
-        Floor.F1 to 600,
-        Floor.F2 to 600,
-        Floor.F3 to 600,
-        Floor.F4 to 720,
-        Floor.F5 to 600,
-        Floor.F6 to 720,
-        Floor.F7 to 840,
-        Floor.M1 to 480,
-        Floor.M2 to 480,
-        Floor.M3 to 480,
-        Floor.M4 to 480,
-        Floor.M5 to 480,
-        Floor.M6 to 480,
-        Floor.M7 to 900,
-    )
-
-
     /**
      * Updates the run information from the tab entries provided and from the tab list.
      * Should be run on some loop.
@@ -216,6 +179,42 @@ object RunInformation {
                     + if (currentFloor.equalsOneOf(Floor.F6, Floor.F7, Floor.M6, Floor.M7)) 2 else 0
                     )
         }
+
+    private val requiredSecretPercentage: Map<Floor, Double> = mapOf(
+        Floor.E  to 30.0,
+        Floor.F1 to 30.0,
+        Floor.F2 to 40.0,
+        Floor.F3 to 50.0,
+        Floor.F4 to 60.0,
+        Floor.F5 to 70.0,
+        Floor.F6 to 85.0,
+        Floor.F7 to 100.0,
+        Floor.M1 to 100.0,
+        Floor.M2 to 100.0,
+        Floor.M3 to 100.0,
+        Floor.M4 to 100.0,
+        Floor.M5 to 100.0,
+        Floor.M6 to 100.0,
+        Floor.M7 to 100.0,
+    )
+
+    private val timeLimit: Map<Floor, Int> = mapOf(
+        Floor.E  to 600,
+        Floor.F1 to 600,
+        Floor.F2 to 600,
+        Floor.F3 to 600,
+        Floor.F4 to 720,
+        Floor.F5 to 600,
+        Floor.F6 to 720,
+        Floor.F7 to 840,
+        Floor.M1 to 480,
+        Floor.M2 to 480,
+        Floor.M3 to 480,
+        Floor.M4 to 480,
+        Floor.M5 to 480,
+        Floor.M6 to 480,
+        Floor.M7 to 900,
+    )
 
     enum class Floor{
         E, F1, F2, F3, F4, F5, F6, F7, M1, M2, M3, M4, M5, M6, M7

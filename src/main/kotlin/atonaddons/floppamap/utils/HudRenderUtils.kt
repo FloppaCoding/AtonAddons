@@ -15,6 +15,12 @@ import net.minecraft.entity.player.EnumPlayerModelParts
 import org.lwjgl.opengl.GL11
 import java.awt.Color
 
+/**
+ * A Collection of methods for rendering 2D Objects in orthographic projection for the HUD or for a gui.
+ *
+ * Based on the [rendering for Funny Map by Harry282](https://github.com/Harry282/FunnyMap/blob/master/src/main/kotlin/funnymap/utils/RenderUtils.kt).
+ * @author Aton
+ */
 object HudRenderUtils {
 
     private val tessellator: Tessellator = Tessellator.getInstance()
