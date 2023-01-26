@@ -120,7 +120,7 @@ object MapRender: HudElement(
 
         for (x in 0..10) {
             for (y in 0..10) {
-                val tile = Dungeon.dungeonList[x * 11 + y] ?: continue
+                val tile = Dungeon.getDungeonTile(x, y) ?: continue
                 if (tile.state == RoomState.UNDISCOVERED && !tile.visited) continue
 
                 val xOffset = (x shr 1) * (roomSize + connectorSize)
@@ -182,7 +182,7 @@ object MapRender: HudElement(
         for (x in 0..10 step 2) {
             for (y in 0..10 step 2) {
 
-                val tile = Dungeon.dungeonList[x * 11 + y] ?: continue
+                val tile = Dungeon.getDungeonTile(x, y) ?: continue
 
                 if (tile.state == RoomState.UNDISCOVERED && !tile.visited) continue
 
@@ -220,9 +220,11 @@ object MapRender: HudElement(
                     // Room Secrets
                     if (tile.canHaveSecrets) {
                         val maxSecrets = if (tile.visited) tile.data.maxSecrets?.toString() ?: "?" else "?"
-                        name.add(
+                        val secretText = if (DungeonMap.trackSecrets.enabled)
                             "${tile.data.currentSecrets}/${maxSecrets}"
-                        )
+                        else
+                            maxSecrets
+                        name.add(secretText)
                     }
 
                     val color = if (MapRooms.mapColorText.enabled) when (tile.state) {

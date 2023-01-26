@@ -23,10 +23,7 @@ class Room(x: Int, z: Int, var data: RoomData) : Tile(x, z) {
      * This corresponds to the most west and north tile of a room. (west prioritized over north)
      * The unique tile is the one which has the checkmark on the map.
      */
-    val isUnique: Boolean
-        get() {
-            return Dungeon.dungeonList.first { it is Room && !it.isSeparator && it.data === this.data } === this
-        }
+    var isUnique: Boolean = false
 
     val canHaveSecrets: Boolean
         get() {

@@ -47,9 +47,9 @@ object DungeonScan {
                     continue
                 }
 
-                if (Dungeon.dungeonList[column * 11 + row]?.scanned == true) continue
+                if (Dungeon.getDungeonTile(column, row)?.scanned == true) continue
                 getRoomFromWorld(xPos, zPos, column, row)?.let { newTile ->
-                    val oldTile = Dungeon.dungeonList[column * 11 + row]
+                    val oldTile = Dungeon.getDungeonTile(column, row)
                     // When the tile is already scanned from the map item make sure to not overwrite it.
                     // Instead just update the values.
                     if (oldTile != null) {
@@ -64,7 +64,7 @@ object DungeonScan {
                             oldTile.scanned = true
                         }
                     } else {
-                        Dungeon.dungeonList[column * 11 + row] = newTile
+                        Dungeon.setDungeonTile(column, row, newTile)
                         if (newTile is Room && newTile.data.type == RoomType.NORMAL) updateConnection = true
                     }
                 }

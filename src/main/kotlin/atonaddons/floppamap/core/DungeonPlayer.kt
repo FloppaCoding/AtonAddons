@@ -7,6 +7,8 @@ import atonaddons.floppamap.utils.MapUtils
 import atonaddons.floppamap.utils.MapUtils.mapX
 import atonaddons.floppamap.utils.MapUtils.mapZ
 import atonaddons.floppamap.utils.MapUtils.yaw
+import atonaddons.module.impl.dungeon.PartyTracker
+import atonaddons.module.impl.render.DungeonMap
 import atonaddons.utils.HypixelApiUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -55,7 +57,7 @@ class DungeonPlayer(var player: EntityPlayer, var name: String,
      * Not to be confused with [Dungeon.currentRoom].
      */
     val currentRoom: Room?
-     get() = (currentRoomIndex?.let{Dungeon.dungeonList[it]} as? Room)
+     get() = (currentRoomIndex?.let{Dungeon.getDungeonTileList()[it]} as? Room)
 
     /**
      * Maps the index of the tile in [Dungeon.dungeonList] to the count of ticks the player spent in that Tile.
@@ -68,7 +70,7 @@ class DungeonPlayer(var player: EntityPlayer, var name: String,
     private var pending: Boolean = false
 
     init {
-        if (!fakeEntity) {
+        if (!fakeEntity && (PartyTracker.enabled || DungeonMap.trackSecrets.enabled)) {
             scope.launch(Dispatchers.IO) { secretsAtRunStart = fetchTotalSecretsFromApi() }
         }
     }
@@ -101,9 +103,9 @@ class DungeonPlayer(var player: EntityPlayer, var name: String,
         // Update the current room and info about it.
         val newIndex = getCurrentRoomIndex()
         val oldRoom = currentRoom
-        val shouldUpdateSecrets = Dungeon.hasRunStarted &&  !pending &&
+        val shouldUpdateSecrets = DungeonMap.trackSecrets.enabled && Dungeon.hasRunStarted &&  !pending &&
                 (System.currentTimeMillis() > lastSecretCheck.timeMS + 5000
-                    || ( newIndex != currentRoomIndex && oldRoom?.data?.name != (newIndex?.let{Dungeon.dungeonList[it]} as? Room)?.data?.name ))
+                    || ( newIndex != currentRoomIndex && oldRoom?.data?.name != (newIndex?.let{Dungeon.getDungeonTileList()[it]} as? Room)?.data?.name ))
         currentRoomIndex = newIndex
         updateVisitedTileTimes()
         if (shouldUpdateSecrets ) {

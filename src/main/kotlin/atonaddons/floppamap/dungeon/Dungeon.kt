@@ -36,7 +36,6 @@ object Dungeon {
     const val startZ = -185
 
     private var lastScanTime: Long = 0
-    private var isScanning = false
     var fullyScanned = false
 
     var hasRunStarted = false
@@ -54,33 +53,7 @@ object Dungeon {
      * for Puzzle names on the tab list.
      * </p>
      */
-    val dungeonList = Array<Tile?>(121) { null }
-    /**
-     * Gets the corresponding Tile from [dungeonList] but first performs a check whether the indices are in range.
-     */
-    @JvmName("getDungeonTileDefault")
-    fun getDungeonTile(column: Int, row: Int) : Tile?{
-        return getDungeonTile<Tile>(column, row)
-    }
-
-    /**
-     * Gets the corresponding Tile from [dungeonList] but first performs a check whether the indices are in range.
-     * It is attempted to cast the Tile to [T], if not possible returns null.
-     */
-    fun <T : Tile> getDungeonTile(column: Int, row: Int) : T?{
-        if (row !in 0..10 || column !in 0..10) return null
-        @Suppress("UNCHECKED_CAST") // This cast is fine, but the compiler does not know this.
-        return (dungeonList[column*11 + row] as? T)
-    }
-
-    /**
-     * Sets the corresponding value from [dungeonList] but first performs a check whether the indices are in range.
-     */
-    fun setDungeonTile(column: Int, row: Int, tile: Tile?): Boolean{
-        if (row !in 0..10 || column !in 0..10) return false
-        dungeonList[column*11 + row] = tile
-        return true
-    }
+    private val dungeonList = Array<Tile?>(121) { null }
 
     /**
      * Contains all the teammates in the current dungeon.
@@ -96,38 +69,27 @@ object Dungeon {
      */
     var currentRoom: Room? = null
 
-    private val entryMessages = listOf(
-        "[BOSS] Bonzo: Gratz for making it this far, but I’m basically unbeatable.",
-        "[BOSS] Scarf: This is where the journey ends for you, Adventurers.",
-        "[BOSS] The Professor: I was burdened with terrible news recently...",
-        "[BOSS] Thorn: Welcome Adventurers! I am Thorn, the Spirit! And host of the Vegan Trials!",
-        "[BOSS] Livid: Welcome, you arrive right on time. I am Livid, the Master of Shadows.",
-        "[BOSS] Sadan: So you made it all the way here... Now you wish to defy me? Sadan?!",
-        "[BOSS] Maxor: WELL WELL WELL LOOK WHO’S HERE!"
-    )
-
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     fun onTick(event: TickEvent.ClientTickEvent) {
         if (event.phase != TickEvent.Phase.START || !inDungeons || mc.thePlayer == null) return
+        // World based scan
         if (shouldScan()) {
             lastScanTime = System.currentTimeMillis()
-            isScanning = true
             DungeonScan.scanDungeon()
-            isScanning = false
+        }
+        // Map item based scan
+        if(DungeonMap.enabled) {
+            MapUpdate.updateRooms()
         }
         val newRoom = getCurrentRoom()
         if (newRoom != currentRoom) {
             MinecraftForge.EVENT_BUS.post(RoomChangeEvent(newRoom, currentRoom))
             currentRoom = newRoom
         }
-
-//        scope.launch {
-            getDungeonTabList()?.let {
-                MapUpdate.updatePlayers(it)
-                RunInformation.updateRunInformation(it)
-            }
-            MapUpdate.updateRooms()
-//        }
+        getDungeonTabList()?.let {
+            MapUpdate.updatePlayers(it)
+            RunInformation.updateRunInformation(it)
+        }
 
         // added check to determine whether in boss based on coordinates. This is relevant when blood is being skipped.
         // this also makes the chat message based detection obsolete
@@ -224,7 +186,7 @@ object Dungeon {
     }
 
     private fun shouldScan() =
-        DungeonMap.autoScan.enabled && DungeonMap.enabled && !isScanning && !fullyScanned && !inBoss && currentFloor != null
+        DungeonMap.autoScan.enabled && DungeonMap.enabled && !fullyScanned && !inBoss && currentFloor != null
 
     fun getDungeonTabList(): List<Pair<NetworkPlayerInfo, String>>? {
         val tabEntries = TabListUtils.tabList
@@ -257,6 +219,46 @@ object Dungeon {
     }
 
     /**
+     * Gets the corresponding Tile from [dungeonList] but first performs a check whether the indices are in range.
+     */
+    @JvmName("getDungeonTileDefault")
+    fun getDungeonTile(column: Int, row: Int) : Tile?{
+        return dungeonList[column*11 + row]
+    }
+
+    /**
+     * Gets the corresponding Tile from [dungeonList] but first performs a check whether the indices are in range.
+     * It is attempted to cast the Tile to [T], if not possible returns null.
+     */
+    inline fun <reified T : Tile> getDungeonTile(column: Int, row: Int) : T?{
+        if (row !in 0..10 || column !in 0..10) return null
+        return (getDungeonTile(column, row) as? T)
+    }
+
+    /**
+     * Sets the corresponding value from [dungeonList] but first performs a check whether the indices are in range.
+     */
+    fun setDungeonTile(column: Int, row: Int, tile: Tile?): Boolean{
+        if (row !in 0..10 || column !in 0..10) return false
+        dungeonList[column*11 + row] = tile
+        return true
+    }
+
+    /**
+     * Returns the [dungeonList] as an immutable List.
+     */
+    fun getDungeonTileList(): List<Tile?>{
+        return dungeonList.asList()
+    }
+
+    /**
+     * Returns the [dungeonList] filtered for the supplied Tile Type.
+     */
+    inline fun <reified T : Tile> getDungeonTileList(): List<T>{
+        return getDungeonTileList().filterIsInstance<T>()
+    }
+
+    /**
      * Rests most of the dungeon properties. Other properties which are not reset here are reset in onWorlLoad.
      * @see onWorldLoad
      */
@@ -269,4 +271,14 @@ object Dungeon {
 
         RunInformation.reset()
     }
+
+    private val entryMessages = listOf(
+        "[BOSS] Bonzo: Gratz for making it this far, but I’m basically unbeatable.",
+        "[BOSS] Scarf: This is where the journey ends for you, Adventurers.",
+        "[BOSS] The Professor: I was burdened with terrible news recently...",
+        "[BOSS] Thorn: Welcome Adventurers! I am Thorn, the Spirit! And host of the Vegan Trials!",
+        "[BOSS] Livid: Welcome, you arrive right on time. I am Livid, the Master of Shadows.",
+        "[BOSS] Sadan: So you made it all the way here... Now you wish to defy me? Sadan?!",
+        "[BOSS] Maxor: WELL WELL WELL LOOK WHO’S HERE!"
+    )
 }

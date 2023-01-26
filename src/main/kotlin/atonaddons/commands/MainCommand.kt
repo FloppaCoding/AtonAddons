@@ -87,8 +87,7 @@ object MainCommand : CommandBase() {
             "test" -> {
                 if (args.size <= 1 ) return
                 val name = args[1]
-                val tiles = Dungeon.dungeonList
-                    .filterIsInstance<Room>()
+                val tiles = Dungeon.getDungeonTileList<Room>()
                     .filter {it.data.name.contains(name) }
                 val uniques = tiles.filter { it.isUnique }
                 modMessage("${uniques.size} uniques out of ${tiles.size} total")

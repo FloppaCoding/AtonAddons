@@ -25,6 +25,7 @@ object DungeonMap : Module(
     val playerNameMode = SelectorSetting("Player Names", "Holding Leap", arrayListOf("Off", "Holding Leap", "Always"), description = "Show player name under player head.")
     val autoScan = BooleanSetting("Map Scan", true, description = "Automatically scans when entering dungeon. Manual scan can be done with \"${MainCommand.commandAliases[0]} scan\"." +
             "\nThis is required if you want to explore the map before the dungeon has started.")
+    val trackSecrets = BooleanSetting("Track Secrets", true, description = "Uses the Hypixel API to track how many secrets are collected in which room.")
     val mapScale = NumberSetting("Map Scale",1.25,0.1,4.0,0.02, description = "Scale of entire map.")
     val roomScale = NumberSetting("Dungeon Scale", 1.0,0.5,1.5, 0.01, description = "Scales the size of the displayed dungeon inside of the map HUD element.")
     val textScale = NumberSetting("Text Scale",0.75,0.0,2.0,0.02, description = "Scale of room names and secret counts relative to map size.")
@@ -45,6 +46,7 @@ object DungeonMap : Module(
             showRunInformation,
             playerNameMode,
             autoScan,
+            trackSecrets,
             mapScale,
             roomScale,
             textScale,
